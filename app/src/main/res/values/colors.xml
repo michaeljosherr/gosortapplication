@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="primary">#1976D2</color> <!-- Example Figma primary color -->
+    <color name="accent">#FFC107</color> <!-- Example Figma accent color -->
+    <color name="background">#F5F5F5</color> <!-- Example Figma background color -->
+    <!-- Add more colors as needed from Figma -->
+</resources>

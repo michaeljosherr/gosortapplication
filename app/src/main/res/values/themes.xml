@@ -1,0 +1,11 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Gosortapplication" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:windowBackground">@color/background</item>
+        <!-- Add more theme customizations as needed -->
+    </style>
+
+    <style name="Theme.Gosortapplication" parent="Base.Theme.Gosortapplication" />
+</resources>

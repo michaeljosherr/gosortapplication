@@ -1,0 +1,8 @@
+<resources>
+    <style name="FigmaButton" parent="Widget.Material3.Button">
+        <item name="android:backgroundTint">@color/primary</item>
+        <item name="android:textColor">@color/white</item>
+        <!-- Removed android:cornerRadius as it's a private attribute -->
+        <!-- Corner radius should be handled in drawable backgrounds -->
+    </style>
+</resources>
