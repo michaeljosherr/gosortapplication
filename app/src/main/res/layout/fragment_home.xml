@@ -3,192 +3,401 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA">
+    android:background="#FFFFFF">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="16dp">
 
         <!-- Header Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="16dp"
+            android:gravity="center_vertical">
 
+            <!-- Logo + greeting grouped on the left -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-                <TextView
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/logo1"
+                    android:contentDescription="@string/app_name"
+                    android:layout_marginEnd="12dp" />
+
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Good Morning!"
-                    android:textSize="16sp"
-                    android:textColor="#7F8C8D" />
+                    android:orientation="vertical">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Ready to sort?"
-                    android:textSize="24sp"
-                    android:textColor="#2C3E50"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Hey, Gwyneth!"
+                        android:textSize="18sp"
+                        android:textColor="#000000"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/poppins" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Your Assigned Area/s: Ground Floor"
+                        android:textSize="12sp"
+                        android:textColor="#666666"
+                        android:fontFamily="@font/poppins" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
+            <!-- Notification icon on the right -->
             <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:src="@drawable/ic_notifications"
-                android:layout_gravity="center_vertical"
-                android:padding="8dp" />
+                android:layout_gravity="center_vertical" />
 
         </LinearLayout>
 
-        <!-- Quick Sort Card -->
+        <!-- Search Bar -->
+        <EditText
+            android:id="@+id/searchBar"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="Search"
+            android:textSize="14sp"
+            android:fontFamily="@font/poppins"
+            android:background="@drawable/edittext_background"
+            android:paddingHorizontal="16dp"
+            android:layout_marginBottom="24dp"
+            android:drawableStart="@drawable/ic_analytics"
+            android:drawablePadding="8dp" />
+
+        <!-- Ground Floor Bin Status Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ground Floor Bin Status"
+            android:textSize="18sp"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:fontFamily="@font/poppins"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Bin cards -->
+        <!-- Biodegradable -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp"
+            android:layout_marginBottom="8dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
             app:cardUseCompatPadding="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/gradient_card"
                 android:orientation="vertical"
-                android:padding="24dp">
+                android:padding="12dp"
+                android:background="@drawable/card_inner_bg"
+                android:clickable="true"
+                android:focusable="true">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Quick Sort"
-                    android:textSize="20sp"
-                    android:textColor="#FFFFFF"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+                    android:text="Biodegradable"
+                    android:textSize="15sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/poppins" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Sort your items instantly with our advanced algorithms"
-                    android:textSize="14sp"
-                    android:textColor="#FFFFFF"
-                    android:alpha="0.9"
-                    android:layout_marginBottom="16dp" />
-
-                <Button
-                    android:id="@+id/quickSortBtn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Start Sorting"
-                    android:textColor="#4A90E2"
-                    android:background="@drawable/button_white"
-                    android:paddingHorizontal="24dp"
-                    android:paddingVertical="12dp" />
+                <ProgressBar
+                    android:layout_width="match_parent"
+                    android:layout_height="16dp"
+                    android:progress="70"
+                    android:layout_marginTop="8dp"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:progressDrawable="@drawable/progress_orange" />
 
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>
 
-        <!-- Statistics Grid -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Statistics"
-            android:textSize="18sp"
-            android:textColor="#2C3E50"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp" />
-
-        <LinearLayout
+        <!-- Non-Biodegradable -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="8dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            app:cardUseCompatPadding="true">
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardUseCompatPadding="true">
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:background="@drawable/card_inner_bg"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Non- Biodegradable"
+                    android:textSize="15sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/poppins" />
+
+                <ProgressBar
+                    android:layout_width="match_parent"
+                    android:layout_height="16dp"
+                    android:progress="45"
+                    android:layout_marginTop="8dp"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:progressDrawable="@drawable/progress_blue" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Mixed Waste -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            app:cardUseCompatPadding="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:background="@drawable/card_inner_bg"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mixed Waste"
+                    android:textSize="15sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/poppins" />
+
+                <ProgressBar
+                    android:layout_width="match_parent"
+                    android:layout_height="16dp"
+                    android:progress="85"
+                    android:layout_marginTop="8dp"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:progressDrawable="@drawable/progress_green" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Unidentified Waste -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            app:cardUseCompatPadding="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:background="@drawable/card_inner_bg"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Unidentified Waste"
+                    android:textSize="15sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/poppins" />
+
+                <ProgressBar
+                    android:layout_width="match_parent"
+                    android:layout_height="16dp"
+                    android:progress="30"
+                    android:layout_marginTop="8dp"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:progressDrawable="@drawable/progress_yellow" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Hazardous Waste -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            app:cardUseCompatPadding="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:background="@drawable/card_inner_bg"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hazardous Waste"
+                    android:textSize="15sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/poppins" />
+
+                <ProgressBar
+                    android:layout_width="match_parent"
+                    android:layout_height="16dp"
+                    android:progress="5"
+                    android:layout_marginTop="8dp"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:progressDrawable="@drawable/progress_red" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Recent Notifications -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Recent Notifications"
+            android:textSize="16sp"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:fontFamily="@font/poppins"
+            android:layout_marginBottom="12dp" />
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardUseCompatPadding="true"
+            android:background="@drawable/notification_unread">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Mixed Waste Bin is at 90% level, please take out the trash bag."
+                    android:textSize="14sp"
+                    android:textColor="#2C3E50"
+                    android:fontFamily="@font/poppins" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center">
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="125"
-                        android:textSize="24sp"
-                        android:textColor="#4A90E2"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Total Sorts"
+                        android:text="Aug 8, 2025"
                         android:textSize="12sp"
                         android:textColor="#7F8C8D"
-                        android:layout_marginTop="4dp" />
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppins" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Mark as Read"
+                        android:textSize="12sp"
+                        android:textColor="#14AE31"
+                        android:fontFamily="@font/poppins" />
 
                 </LinearLayout>
 
-            </androidx.cardview.widget.CardView>
+            </LinearLayout>
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardUseCompatPadding="true"
+            android:background="@drawable/notification_unread">
+
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardUseCompatPadding="true">
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Biodegradable Bin is at 90% level, please take out the trash bag."
+                    android:textSize="14sp"
+                    android:textColor="#2C3E50"
+                    android:fontFamily="@font/poppins" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center">
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="1.2K"
-                        android:textSize="24sp"
-                        android:textColor="#27AE60"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Items Sorted"
+                        android:text="Aug 8, 2025"
                         android:textSize="12sp"
                         android:textColor="#7F8C8D"
-                        android:layout_marginTop="4dp" />
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppins" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Mark as Read"
+                        android:textSize="12sp"
+                        android:textColor="#14AE31"
+                        android:fontFamily="@font/poppins" />
 
                 </LinearLayout>
 
-            </androidx.cardview.widget.CardView>
+            </LinearLayout>
 
-        </LinearLayout>
-
-        <!-- Recent Activity -->
+        </androidx.cardview.widget.CardView>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -218,6 +427,7 @@
                     android:layout_marginBottom="12dp">
 
                     <ImageView
+                        android:layout_marginStart="8dp"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:src="@drawable/ic_analytics"

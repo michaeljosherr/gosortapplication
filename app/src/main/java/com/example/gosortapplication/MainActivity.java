@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
                 selectedFragment = new AnalyticsFragment();
             } else if (itemId == R.id.nav_notifications) {
                 selectedFragment = new NotificationsFragment();
+            } else if (itemId == R.id.nav_profile) {
+                selectedFragment = new ProfileFragment();
             }
 
             if (selectedFragment != null) {

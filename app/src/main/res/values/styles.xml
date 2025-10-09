@@ -1,8 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="FigmaButton" parent="Widget.Material3.Button">
-        <item name="android:backgroundTint">@color/primary</item>
-        <item name="android:textColor">@color/white</item>
-        <!-- Removed android:cornerRadius as it's a private attribute -->
-        <!-- Corner radius should be handled in drawable backgrounds -->
+
+    <!-- Reusable text appearances -->
+    <style name="TextAppearance.Gosort.Headline">
+        <item name="android:fontFamily">@font/poppins</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/text_primary</item>
     </style>
+
+    <style name="TextAppearance.Gosort.Body">
+        <item name="android:fontFamily">@font/poppins</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <!-- Backwards-compatible alias used in some layouts -->
+    <style name="TextAppearance.Gosort" parent="TextAppearance.Gosort.Body" />
+
+    <!-- Card style used across the app -->
+    <style name="Widget.Gosort.CardView" parent="Widget.MaterialComponents.CardView">
+        <item name="cardCornerRadius">12dp</item>
+        <item name="cardElevation">2dp</item>
+    </style>
+
+    <!-- Reusable button style based on Material 3 -->
+    <style name="FigmaButton" parent="Widget.MaterialComponents.Button">
+        <item name="backgroundTint">@color/primary</item>
+        <item name="android:textColor">@color/white</item>
+        <!-- Corner radius should be handled in drawable backgrounds for compatibility -->
+    </style>
+
 </resources>

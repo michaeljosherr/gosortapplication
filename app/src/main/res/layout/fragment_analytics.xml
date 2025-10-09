@@ -57,89 +57,172 @@
                     android:textSize="18sp"
                     android:textColor="#2C3E50"
                     android:textStyle="bold"
-                    android:layout_marginBottom="16dp" />
+                    android:layout_marginBottom="12dp" />
 
+                <!-- Concentric donut view -->
+                <com.example.gosortapplication.ConcentricDonutView
+                    android:id="@+id/concentricDonut"
+                    android:layout_width="160dp"
+                    android:layout_height="160dp"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Bin Legend (5 categories) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:orientation="vertical">
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:gravity="center">
-
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <!-- Biodegradable -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="95%"
-                            android:textSize="28sp"
-                            android:textColor="#27AE60"
-                            android:textStyle="bold" />
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="8dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                            <View
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:background="#F39C12" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
+                                android:layout_height="wrap_content"
+                                android:text="Biodegradable"
+                                android:layout_marginStart="8dp"
+                                android:fontFamily="@font/poppins" />
+
+                            <TextView
+                                android:id="@+id/tvBiodeg"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="70%"
+                                android:fontFamily="@font/poppins" />
+
+                        </LinearLayout>
+
+                        <!-- Non-Biodegradable -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Efficiency Rate"
-                            android:textSize="12sp"
-                            android:textColor="#7F8C8D"
-                            android:gravity="center" />
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="8dp">
+
+                            <View
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:background="#4A90E2" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
+                                android:layout_height="wrap_content"
+                                android:text="Non- Biodegradable"
+                                android:layout_marginStart="8dp"
+                                android:fontFamily="@font/poppins" />
+
+                            <TextView
+                                android:id="@+id/tvNonBiodeg"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="45%"
+                                android:fontFamily="@font/poppins" />
+
+                        </LinearLayout>
+
+                        <!-- Mixed Waste -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="8dp">
+
+                            <View
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:background="#27AE60" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
+                                android:layout_height="wrap_content"
+                                android:text="Mixed Waste"
+                                android:layout_marginStart="8dp"
+                                android:fontFamily="@font/poppins" />
+
+                            <TextView
+                                android:id="@+id/tvMixed"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="85%"
+                                android:fontFamily="@font/poppins" />
+
+                        </LinearLayout>
+
+                        <!-- Unidentified -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="8dp">
+
+                            <View
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:background="#F7E34A" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
+                                android:layout_height="wrap_content"
+                                android:text="Unidentified Waste"
+                                android:layout_marginStart="8dp"
+                                android:fontFamily="@font/poppins" />
+
+                            <TextView
+                                android:id="@+id/tvUnidentified"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="30%"
+                                android:fontFamily="@font/poppins" />
+
+                        </LinearLayout>
+
+                        <!-- Hazardous -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <View
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:background="#E74C3C" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
+                                android:layout_height="wrap_content"
+                                android:text="Hazardous Waste"
+                                android:layout_marginStart="8dp"
+                                android:fontFamily="@font/poppins" />
+
+                            <TextView
+                                android:id="@+id/tvHazardous"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="5%"
+                                android:fontFamily="@font/poppins" />
+
+                        </LinearLayout>
 
                     </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:gravity="center">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="2.3s"
-                            android:textSize="28sp"
-                            android:textColor="#F39C12"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Avg Time"
-                            android:textSize="12sp"
-                            android:textColor="#7F8C8D"
-                            android:gravity="center" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:gravity="center">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="1,250"
-                            android:textSize="28sp"
-                            android:textColor="#E74C3C"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Items Sorted"
-                            android:textSize="12sp"
-                            android:textColor="#7F8C8D"
-                            android:gravity="center" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
 
             </LinearLayout>
 
@@ -364,7 +447,7 @@
                         android:text="Mon"
                         android:textSize="10sp"
                         android:textColor="#7F8C8D"
-                        android:gravity="center" />
+                        android:textAlignment="center" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -373,7 +456,7 @@
                         android:text="Tue"
                         android:textSize="10sp"
                         android:textColor="#7F8C8D"
-                        android:gravity="center" />
+                        android:textAlignment="center" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -382,7 +465,7 @@
                         android:text="Wed"
                         android:textSize="10sp"
                         android:textColor="#7F8C8D"
-                        android:gravity="center" />
+                        android:textAlignment="center" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -391,7 +474,7 @@
                         android:text="Thu"
                         android:textSize="10sp"
                         android:textColor="#7F8C8D"
-                        android:gravity="center" />
+                        android:textAlignment="center" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -400,7 +483,7 @@
                         android:text="Fri"
                         android:textSize="10sp"
                         android:textColor="#7F8C8D"
-                        android:gravity="center" />
+                        android:textAlignment="center" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -409,7 +492,7 @@
                         android:text="Sat"
                         android:textSize="10sp"
                         android:textColor="#7F8C8D"
-                        android:gravity="center" />
+                        android:textAlignment="center" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -418,7 +501,7 @@
                         android:text="Sun"
                         android:textSize="10sp"
                         android:textColor="#7F8C8D"
-                        android:gravity="center" />
+                        android:textAlignment="center" />
 
                 </LinearLayout>
 

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Focused state - with green outline -->
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/textbox_background" />
+            <stroke 
+                android:width="2dp" 
+                android:color="@color/button_green" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+    
+    <!-- Default state - no outline -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/textbox_background" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+</selector>
