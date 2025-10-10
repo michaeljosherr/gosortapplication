@@ -32,6 +32,44 @@ public class HomeFragment extends Fragment {
             });
         }
 
+        // Bind analytics values to the small progress bars on Home
+        final android.widget.ProgressBar pbBiodeg = root.findViewById(R.id.progBiodeg);
+        final android.widget.ProgressBar pbNonBiodeg = root.findViewById(R.id.progNonBiodeg);
+        final android.widget.ProgressBar pbMixed = root.findViewById(R.id.progMixed);
+        final android.widget.ProgressBar pbUnidentified = root.findViewById(R.id.progUnidentified);
+        final android.widget.ProgressBar pbHazardous = root.findViewById(R.id.progHazardous);
+
+        AnalyticsModel model = AnalyticsModel.get();
+        // apply initial values
+        int[] cur = model.getValues();
+        if (pbBiodeg != null) pbBiodeg.setProgress(cur[0]);
+        if (pbNonBiodeg != null) pbNonBiodeg.setProgress(cur[1]);
+        if (pbMixed != null) pbMixed.setProgress(cur[2]);
+        if (pbUnidentified != null) pbUnidentified.setProgress(cur[3]);
+        if (pbHazardous != null) pbHazardous.setProgress(cur[4]);
+
+        // listen for updates
+        AnalyticsModel.Listener homeListener = new AnalyticsModel.Listener() {
+            @Override
+            public void onDataChanged(int[] values) {
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (pbBiodeg != null) pbBiodeg.setProgress(values[0]);
+                        if (pbNonBiodeg != null) pbNonBiodeg.setProgress(values[1]);
+                        if (pbMixed != null) pbMixed.setProgress(values[2]);
+                        if (pbUnidentified != null) pbUnidentified.setProgress(values[3]);
+                        if (pbHazardous != null) pbHazardous.setProgress(values[4]);
+                    });
+                }
+            }
+        };
+        model.addListener(homeListener);
+
+        root.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override public void onViewAttachedToWindow(View v) {}
+            @Override public void onViewDetachedFromWindow(View v) { model.removeListener(homeListener); }
+        });
+
         return root;
     }
 }
