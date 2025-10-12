@@ -1,11 +1,13 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.Gosortapplication" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.Gosortapplication" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- App colors and typography -->
         <item name="colorPrimary">@color/button_green</item>
         <item name="colorOnPrimary">@color/white</item>
         <item name="android:fontFamily">@font/poppins</item>
         <item name="materialCardViewStyle">@style/Widget.Gosort.CardView</item>
+        <!-- Material button defaults for the app -->
+        <item name="materialButtonStyle">@style/Widget.Gosort.MaterialButton</item>
     </style>
 
     <style name="Theme.Gosortapplication" parent="Base.Theme.Gosortapplication" />

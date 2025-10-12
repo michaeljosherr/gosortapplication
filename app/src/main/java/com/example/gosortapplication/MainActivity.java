@@ -24,7 +24,25 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        BottomNavigationView bottomNavigation = findViewById(R.id.bottom_navigation);
+    BottomNavigationView bottomNavigation = findViewById(R.id.bottom_navigation);
+
+    // Initialize notification persistence
+    NotificationRepository.get().init(this);
+
+        // Observe notification unread count and update badge
+        NotificationRepository.get().addListener(new NotificationRepository.Listener() {
+            @Override
+            public void onUnreadCountChanged(int newCount) {
+                runOnUiThread(() -> {
+                    if (newCount <= 0) {
+                        if (bottomNavigation.getBadge(R.id.nav_notifications) != null)
+                            bottomNavigation.removeBadge(R.id.nav_notifications);
+                    } else {
+                        bottomNavigation.getOrCreateBadge(R.id.nav_notifications).setNumber(newCount);
+                    }
+                });
+            }
+        });
 
         // Load default fragment (Home)
         if (savedInstanceState == null) {

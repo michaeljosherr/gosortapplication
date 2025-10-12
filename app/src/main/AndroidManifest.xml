@@ -28,6 +28,18 @@
             android:exported="false" />
 
         <activity
+            android:name=".SetupActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".SetupScanActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".DeviceIdentityActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".MainActivity"
             android:exported="false" />
 

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white">
+
+    <TextView
+        android:id="@+id/tvHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+    android:text="Device Identity Configuration"
+    android:textSize="20sp"
+    android:textStyle="bold"
+    android:textColor="@color/button_green"
+        android:gravity="center"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp" />
+
+    <FrameLayout
+        android:id="@+id/stepContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="12dp">
+
+        <!-- Step 1: Choice - placeholder -->
+        <LinearLayout
+            android:id="@+id/step1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Would you like to add a new identity or use an existing one?"
+                android:gravity="center"
+                android:padding="12dp"
+                android:textColor="@color/text_primary" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddNew"
+                style="@style/Widget.Gosort.MaterialButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="Add New Identity"
+                android:layout_marginTop="12dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnUseExisting"
+                style="@style/Widget.Gosort.OutlineButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="Use Existing Identity"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+        <!-- Step 2: Enter New identity placeholder -->
+        <LinearLayout
+            android:id="@+id/step2"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Enter New Identity (e.g. Level1)"
+                android:textColor="@color/text_primary" />
+
+            <EditText
+                android:id="@+id/etNewIdentity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/edittext_background"
+                android:padding="12dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSubmitNew"
+                style="@style/Widget.Gosort.MaterialButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="Submit"
+                android:layout_marginTop="12dp" />
+
+        </LinearLayout>
+
+        <!-- Step 3: Confirm / Recognized -->
+        <LinearLayout
+            android:id="@+id/step3"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Identity Recognized!"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:id="@+id/tvRecognized"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Level1"
+                android:textSize="16sp"
+                android:textColor="@color/button_green" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCompleteSetup"
+                style="@style/Widget.Gosort.MaterialButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="Complete Device Setup"
+                android:layout_marginTop="24dp" />
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBack"
+            style="@style/Widget.Gosort.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Back" />
+
+    </LinearLayout>
+
+</LinearLayout>
