@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">GoSort</string>
     <string name="scan_network">Scan Network</string>
     <string name="scanning_network">Scanning network...</string>
     <string name="scanning_network_progress">Scanning network... %1$d%%</string>
@@ -7,4 +8,3 @@
     <string name="servers_found">Found %1$d GoSort server(s)</string>
     <string name="available_servers">Available GoSort Servers</string>
 </resources>
-

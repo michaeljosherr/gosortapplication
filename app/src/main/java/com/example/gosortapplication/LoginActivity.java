@@ -26,7 +26,7 @@ public class LoginActivity extends AppCompatActivity {
 
                 // Default login info: username="admin", password="123"
                 if (email.equals("admin") && password.equals("123")) {
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    Intent intent = new Intent(LoginActivity.this, SetupActivity.class);
                     startActivity(intent);
                     finish();
                 } else {
