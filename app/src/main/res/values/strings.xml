@@ -16,4 +16,7 @@
     <string name="next">NEXT</string>
     <string name="enter_ip_address">Please enter the device IP address</string>
     <string name="connection_failed">Connection failed: %1$s</string>
+    <string name="scan">SCAN</string>
+    <string name="no_devices_found">No GoSort devices found on the network</string>
+    <string name="select_device">Select GoSort Device</string>
 </resources>

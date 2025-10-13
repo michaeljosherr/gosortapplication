@@ -7,16 +7,22 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SetupActivity extends AppCompatActivity {
     private GoSortApiClient apiClient;
+    private NetworkScanner networkScanner;
     private EditText ipAddressInput;
     private ProgressBar progressBar;
+    private Button btnScan;
+    private final Set<String> discoveredDevices = new HashSet<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,8 +30,10 @@ public class SetupActivity extends AppCompatActivity {
         setContentView(R.layout.activity_setup);
 
         apiClient = new GoSortApiClient();
+        networkScanner = new NetworkScanner();
         ViewPager2 pager = findViewById(R.id.viewPager);
         Button btn = findViewById(R.id.btnSetupDevice);
+        btnScan = findViewById(R.id.btnScan);
         ipAddressInput = findViewById(R.id.ipAddressInput);
         progressBar = findViewById(R.id.progressBar);
 
@@ -55,15 +63,67 @@ public class SetupActivity extends AppCompatActivity {
 
                 if (position == 1) { // Connect Device page
                     ipAddressInput.setVisibility(View.VISIBLE);
+                    btnScan.setVisibility(View.VISIBLE); // Show scan button on connection page
                     btn.setText(R.string.connect);
                 } else if (position == pages.size() - 1) {
                     ipAddressInput.setVisibility(View.GONE);
+                    btnScan.setVisibility(View.GONE); // Hide scan button
                     btn.setText(R.string.get_started);
                 } else {
                     ipAddressInput.setVisibility(View.GONE);
+                    btnScan.setVisibility(View.GONE); // Hide scan button
                     btn.setText(position == 0 ? R.string.setup_device : R.string.next);
                 }
             }
+        });
+
+        btnScan.setOnClickListener(v -> {
+            progressBar.setVisibility(View.VISIBLE);
+            btnScan.setEnabled(false);
+            btn.setEnabled(false);
+            discoveredDevices.clear();
+
+            networkScanner.scanNetwork(new NetworkScanner.ScanCallback() {
+                @Override
+                public void onDeviceFound(String ipAddress) {
+                    discoveredDevices.add(ipAddress);
+                }
+
+                @Override
+                public void onScanProgress(int progress) {
+                    // Update progress text if you have one
+                }
+
+                @Override
+                public void onScanComplete() {
+                    progressBar.setVisibility(View.GONE);
+                    btnScan.setEnabled(true);
+                    btn.setEnabled(true);
+
+                    if (discoveredDevices.isEmpty()) {
+                        Toast.makeText(SetupActivity.this,
+                            R.string.no_devices_found, Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    String[] devices = discoveredDevices.toArray(new String[0]);
+                    new AlertDialog.Builder(SetupActivity.this)
+                        .setTitle(R.string.select_device)
+                        .setItems(devices, (dialog, which) -> {
+                            ipAddressInput.setText(devices[which]);
+                        })
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show();
+                }
+
+                @Override
+                public void onError(String message) {
+                    progressBar.setVisibility(View.GONE);
+                    btnScan.setEnabled(true);
+                    btn.setEnabled(true);
+                    Toast.makeText(SetupActivity.this, message, Toast.LENGTH_LONG).show();
+                }
+            });
         });
 
         btn.setOnClickListener(v -> {
