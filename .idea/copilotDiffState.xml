@@ -3,15 +3,6 @@
   <component name="CopilotDiffPersistence">
     <option name="pendingDiffs">
       <map>
-        <entry key="$PROJECT_DIR$/app/src/main/res/values/strings.xml">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/app/src/main/res/values/strings.xml" />
-              <option name="originalContent" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&#10;&lt;resources&gt;&#10;    &lt;string name=&quot;scan_network&quot;&gt;Scan Network&lt;/string&gt;&#10;    &lt;string name=&quot;scanning_network&quot;&gt;Scanning network...&lt;/string&gt;&#10;    &lt;string name=&quot;scanning_network_progress&quot;&gt;Scanning network... %1$d%%&lt;/string&gt;&#10;    &lt;string name=&quot;no_servers_found&quot;&gt;No GoSort servers found in the network&lt;/string&gt;&#10;    &lt;string name=&quot;servers_found&quot;&gt;Found %1$d GoSort server(s)&lt;/string&gt;&#10;    &lt;string name=&quot;available_servers&quot;&gt;Available GoSort Servers&lt;/string&gt;&#10;&lt;/resources&gt;&#10;&#10;" />
-              <option name="updatedContent" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&#10;&lt;resources&gt;&#10;    &lt;string name=&quot;app_name&quot;&gt;GoSort&lt;/string&gt;&#10;    &lt;string name=&quot;scan_network&quot;&gt;Scan Network&lt;/string&gt;&#10;    &lt;string name=&quot;scanning_network&quot;&gt;Scanning network...&lt;/string&gt;&#10;    &lt;string name=&quot;scanning_network_progress&quot;&gt;Scanning network... %1$d%%&lt;/string&gt;&#10;    &lt;string name=&quot;no_servers_found&quot;&gt;No GoSort servers found in the network&lt;/string&gt;&#10;    &lt;string name=&quot;servers_found&quot;&gt;Found %1$d GoSort server(s)&lt;/string&gt;&#10;    &lt;string name=&quot;available_servers&quot;&gt;Available GoSort Servers&lt;/string&gt;&#10;&lt;/resources&gt;" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
         <entry key="$PROJECT_DIR$/gradle.properties">
           <value>
             <PendingDiffInfo>

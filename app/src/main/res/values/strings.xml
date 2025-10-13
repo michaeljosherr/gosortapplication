@@ -7,4 +7,7 @@
     <string name="no_servers_found">No GoSort servers found in the network</string>
     <string name="servers_found">Found %1$d GoSort server(s)</string>
     <string name="available_servers">Available GoSort Servers</string>
+    <string name="profile_avatar">Profile avatar</string>
+    <string name="action_edit_profile">Edit profile picture</string>
+    <string name="action_logout">Log out of account</string>
 </resources>
