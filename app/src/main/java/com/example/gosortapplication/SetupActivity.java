@@ -12,9 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class SetupActivity extends AppCompatActivity {
     private GoSortApiClient apiClient;
@@ -22,7 +20,7 @@ public class SetupActivity extends AppCompatActivity {
     private EditText ipAddressInput;
     private ProgressBar progressBar;
     private Button btnScan;
-    private final Set<String> discoveredDevices = new HashSet<>();
+    private final List<String> goSortServers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,47 +79,50 @@ public class SetupActivity extends AppCompatActivity {
             progressBar.setVisibility(View.VISIBLE);
             btnScan.setEnabled(false);
             btn.setEnabled(false);
-            discoveredDevices.clear();
+            goSortServers.clear();
 
             networkScanner.scanNetwork(new NetworkScanner.ScanCallback() {
                 @Override
                 public void onDeviceFound(String ipAddress) {
-                    discoveredDevices.add(ipAddress);
+                    runOnUiThread(() -> goSortServers.add(ipAddress));
                 }
 
                 @Override
                 public void onScanProgress(int progress) {
-                    // Update progress text if you have one
+                    runOnUiThread(() -> progressBar.setProgress(progress));
                 }
 
                 @Override
                 public void onScanComplete() {
-                    progressBar.setVisibility(View.GONE);
-                    btnScan.setEnabled(true);
-                    btn.setEnabled(true);
+                    runOnUiThread(() -> {
+                        progressBar.setVisibility(View.GONE);
+                        btnScan.setEnabled(true);
+                        btn.setEnabled(true);
 
-                    if (discoveredDevices.isEmpty()) {
-                        Toast.makeText(SetupActivity.this,
-                            R.string.no_devices_found, Toast.LENGTH_LONG).show();
-                        return;
-                    }
+                        if (goSortServers.isEmpty()) {
+                            Toast.makeText(SetupActivity.this,
+                                R.string.no_gosort_servers_found, Toast.LENGTH_LONG).show();
+                            return;
+                        }
 
-                    String[] devices = discoveredDevices.toArray(new String[0]);
-                    new AlertDialog.Builder(SetupActivity.this)
-                        .setTitle(R.string.select_device)
-                        .setItems(devices, (dialog, which) -> {
-                            ipAddressInput.setText(devices[which]);
-                        })
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .show();
+                        // Show simple list of found GoSort servers
+                        new AlertDialog.Builder(SetupActivity.this)
+                            .setTitle(R.string.select_gosort_server)
+                            .setItems(goSortServers.toArray(new String[0]),
+                                (dialog, which) -> ipAddressInput.setText(goSortServers.get(which)))
+                            .setNegativeButton(android.R.string.cancel, null)
+                            .show();
+                    });
                 }
 
                 @Override
                 public void onError(String message) {
-                    progressBar.setVisibility(View.GONE);
-                    btnScan.setEnabled(true);
-                    btn.setEnabled(true);
-                    Toast.makeText(SetupActivity.this, message, Toast.LENGTH_LONG).show();
+                    runOnUiThread(() -> {
+                        progressBar.setVisibility(View.GONE);
+                        btnScan.setEnabled(true);
+                        btn.setEnabled(true);
+                        Toast.makeText(SetupActivity.this, message, Toast.LENGTH_LONG).show();
+                    });
                 }
             });
         });
@@ -141,23 +142,27 @@ public class SetupActivity extends AppCompatActivity {
                 apiClient.testConnection(ipAddress, new GoSortApiClient.ApiCallback() {
                     @Override
                     public void onSuccess() {
-                        progressBar.setVisibility(View.GONE);
-                        btn.setEnabled(true);
-                        // Save IP for future use
-                        getSharedPreferences("GoSort", MODE_PRIVATE)
-                            .edit()
-                            .putString("device_ip", ipAddress)
-                            .apply();
-                        pager.setCurrentItem(pos + 1, true);
+                        runOnUiThread(() -> {
+                            progressBar.setVisibility(View.GONE);
+                            btn.setEnabled(true);
+                            // Save IP for future use
+                            getSharedPreferences("GoSort", MODE_PRIVATE)
+                                .edit()
+                                .putString("device_ip", ipAddress)
+                                .apply();
+                            pager.setCurrentItem(pos + 1, true);
+                        });
                     }
 
                     @Override
                     public void onError(String message) {
-                        progressBar.setVisibility(View.GONE);
-                        btn.setEnabled(true);
-                        Toast.makeText(SetupActivity.this,
-                            getString(R.string.connection_failed, message),
-                            Toast.LENGTH_LONG).show();
+                        runOnUiThread(() -> {
+                            progressBar.setVisibility(View.GONE);
+                            btn.setEnabled(true);
+                            Toast.makeText(SetupActivity.this,
+                                getString(R.string.connection_failed, message),
+                                Toast.LENGTH_LONG).show();
+                        });
                     }
                 });
             } else if (pos < pages.size() - 1) {

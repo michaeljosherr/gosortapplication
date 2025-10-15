@@ -17,6 +17,13 @@
     <string name="enter_ip_address">Please enter the device IP address</string>
     <string name="connection_failed">Connection failed: %1$s</string>
     <string name="scan">SCAN</string>
-    <string name="no_devices_found">No GoSort devices found on the network</string>
-    <string name="select_device">Select GoSort Device</string>
+    <string name="no_gosort_servers_found">No GoSort servers found on the network</string>
+    <string name="select_gosort_server">Select GoSort Server</string>
+    <string name="no_devices_found">No devices found on the network</string>
+    <string name="select_device">Select Device</string>
+    <string name="scanning">Scanning network (%1$d%%)</string>
+    <string name="scan_error">Scanning error: %1$s</string>
+    <string name="manual_ip">Enter IP manually</string>
+    <string name="gosort_servers">GoSort servers found:</string>
+    <string name="other_devices">Other devices found:</string>
 </resources>

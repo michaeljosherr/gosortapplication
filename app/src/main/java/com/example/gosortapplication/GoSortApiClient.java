@@ -1,18 +1,17 @@
 package com.example.gosortapplication;
 
-import android.os.Handler;
-import android.os.Looper;
+import java.io.IOException;
+import androidx.annotation.NonNull;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 public class GoSortApiClient {
     private final OkHttpClient client;
-    private final Handler mainHandler;
-    private String baseUrl;
+    private String baseIp;  // Renamed from baseUrl to baseIp
 
     public interface ApiCallback {
         void onSuccess();
@@ -20,37 +19,43 @@ public class GoSortApiClient {
     }
 
     public GoSortApiClient() {
-        this.client = new OkHttpClient();
-        this.mainHandler = new Handler(Looper.getMainLooper());
+        this.client = new OkHttpClient.Builder()
+            .connectTimeout(500, TimeUnit.MILLISECONDS)
+            .readTimeout(500, TimeUnit.MILLISECONDS)
+            .build();
     }
 
     public void setBaseUrl(String ip) {
-        this.baseUrl = "http://" + ip + "/GoSort_Web/gs_DB";
+        this.baseIp = ip;  // Store just the IP
     }
 
     public void testConnection(String ip, ApiCallback callback) {
         setBaseUrl(ip);
-        String url = baseUrl + "/trash_detected.php";
+        String url = "http://" + baseIp + "/GoSort_Web/gs_DB/trash_detected.php";
 
         Request request = new Request.Builder()
-                .url(url)
-                .build();
+            .url(url)
+            .build();
 
         client.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(Call call, IOException e) {
-                mainHandler.post(() -> callback.onError("Connection failed: " + e.getMessage()));
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                // Silently fail like Python does
+                callback.onError("");
             }
 
             @Override
-            public void onResponse(Call call, Response response) {
-                if (response.isSuccessful()) {
-                    mainHandler.post(callback::onSuccess);
-                } else {
-                    mainHandler.post(() -> callback.onError("Server returned error: " + response.code()));
-                }
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+                // Just check if we got any response at all - endpoint exists
+                callback.onSuccess();
                 response.close();
             }
         });
+    }
+
+    public void verifyRegistration(String deviceIdentity, ApiCallback callback) {
+        String url = "http://" + baseIp + "/GoSort_Web/gs_DB/verify_sorter.php";
+        // Implementation for device registration verification
+        // Will be added when implementing the registration flow
     }
 }

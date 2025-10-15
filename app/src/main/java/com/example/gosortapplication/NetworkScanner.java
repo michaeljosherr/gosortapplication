@@ -2,12 +2,8 @@ package com.example.gosortapplication;
 
 import android.os.Handler;
 import android.os.Looper;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,29 +21,19 @@ public class NetworkScanner {
     }
 
     public NetworkScanner() {
-        this.executor = Executors.newFixedThreadPool(10);
+        this.executor = Executors.newFixedThreadPool(50);  // Same as Python's max_workers
         this.mainHandler = new Handler(Looper.getMainLooper());
         this.apiClient = new GoSortApiClient();
     }
 
     public void scanNetwork(ScanCallback callback) {
-        try {
-            // Get local IP addresses
-            List<String> localIPs = getLocalIPAddresses();
-            if (localIPs.isEmpty()) {
-                mainHandler.post(() -> callback.onError("No network interfaces found"));
-                return;
-            }
-
-            for (String localIP : localIPs) {
-                scanSubnet(localIP, callback);
-            }
-        } catch (Exception e) {
-            mainHandler.post(() -> callback.onError("Error scanning network: " + e.getMessage()));
+        // Get local IP - similar to Python's socket.getsockname()
+        String localIP = getLocalIP();
+        if (localIP == null) {
+            mainHandler.post(() -> callback.onError("Could not determine local IP"));
+            return;
         }
-    }
 
-    private void scanSubnet(String localIP, ScanCallback callback) {
         String subnet = localIP.substring(0, localIP.lastIndexOf(".") + 1);
         AtomicInteger progress = new AtomicInteger(0);
         AtomicInteger activeThreads = new AtomicInteger(0);
@@ -58,23 +44,20 @@ public class NetworkScanner {
 
             executor.execute(() -> {
                 try {
-                    // First check if host is reachable
-                    if (InetAddress.getByName(targetIP).isReachable(200)) {
-                        // Then check if it's a GoSort device
-                        apiClient.testConnection(targetIP, new GoSortApiClient.ApiCallback() {
-                            @Override
-                            public void onSuccess() {
-                                mainHandler.post(() -> callback.onDeviceFound(targetIP));
-                            }
+                    // Directly test each IP - match Python's behavior exactly
+                    apiClient.testConnection(targetIP, new GoSortApiClient.ApiCallback() {
+                        @Override
+                        public void onSuccess() {
+                            mainHandler.post(() -> callback.onDeviceFound(targetIP));
+                        }
 
-                            @Override
-                            public void onError(String message) {
-                                // Not a GoSort device, ignore
-                            }
-                        });
-                    }
-                } catch (IOException e) {
-                    // Skip unreachable hosts
+                        @Override
+                        public void onError(String message) {
+                            // Silently ignore non-GoSort servers like Python does
+                        }
+                    });
+                } catch (Exception e) {
+                    // Silently ignore errors like Python does
                 }
 
                 int currentProgress = progress.incrementAndGet();
@@ -87,24 +70,16 @@ public class NetworkScanner {
         }
     }
 
-    private List<String> getLocalIPAddresses() {
-        List<String> addresses = new ArrayList<>();
+    private String getLocalIP() {
         try {
-            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
-            for (NetworkInterface intf : interfaces) {
-                if (intf.isUp() && !intf.isLoopback()) {
-                    List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
-                    for (InetAddress addr : addrs) {
-                        if (!addr.isLoopbackAddress() && addr.getHostAddress().contains(".")) {
-                            addresses.add(addr.getHostAddress());
-                        }
-                    }
-                }
-            }
+            Socket socket = new Socket();
+            socket.connect(new InetSocketAddress("8.8.8.8", 53), 1000);
+            String localIP = socket.getLocalAddress().getHostAddress();
+            socket.close();
+            return localIP;
         } catch (Exception e) {
-            e.printStackTrace();
+            return null;
         }
-        return addresses;
     }
 
     public void shutdown() {
