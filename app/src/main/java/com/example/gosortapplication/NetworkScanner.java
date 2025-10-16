@@ -7,9 +7,7 @@ import java.io.InputStreamReader;
 import java.net.DatagramSocket;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
-import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
 import java.util.Collections;
@@ -30,6 +28,25 @@ public class NetworkScanner {
         void onScanProgress(int progress);
         void onScanComplete();
         void onError(String message);
+    }
+
+    public interface ServerValidationCallback {
+        void onResult(boolean isValid);
+    }
+
+    private boolean isDefaultGateway(String ip) {
+        try {
+            String[] parts = ip.split("\\.");
+            if (parts.length != 4) return false;
+
+            // Common default gateway patterns
+            return parts[3].equals("1") ||     // 192.168.1.1
+                   parts[3].equals("254") ||   // 192.168.1.254
+                   (parts[2].equals("1") && parts[3].equals("1")) || // 192.168.1.1
+                   (parts[2].equals("0") && parts[3].equals("1"));   // 192.168.0.1
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public void scanNetwork(ScanCallback callback) {
@@ -60,7 +77,7 @@ public class NetworkScanner {
                 final int currentIP = i;
 
                 executor.execute(() -> {
-                    if (isGoSortServer(ip)) {
+                    if (!isDefaultGateway(ip) && isGoSortServer(ip)) {
                         callback.onDeviceFound(ip);
                     }
                     int progress = (int) ((currentIP / (float) totalIPs) * 100);
@@ -73,6 +90,66 @@ public class NetworkScanner {
                 });
             }
         }).start();
+    }
+
+    public void isGoSortServer(String ip, ServerValidationCallback callback) {
+        if (isDefaultGateway(ip)) {
+            callback.onResult(false);
+            return;
+        }
+
+        new Thread(() -> {
+            boolean result = checkGoSortServer(ip);
+            callback.onResult(result);
+        }).start();
+    }
+
+    private boolean checkGoSortServer(String ip) {
+        if (isDefaultGateway(ip)) return false;
+
+        try {
+            URL url = new URL("http://" + ip + "/GoSort_Web/gs_DB/trash_detected.php");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(TIMEOUT_MS);
+            connection.setReadTimeout(TIMEOUT_MS);
+            connection.setRequestMethod("GET");
+            
+            int responseCode = connection.getResponseCode();
+            
+            // Check if it's a success response (200) or a "No trash type provided" error (400)
+            if (responseCode == 200) {
+                return true;
+            } else if (responseCode == 400) {
+                // Read the response to check for the specific error message
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(connection.getErrorStream()))) {
+                    String response = reader.readLine();
+                    return response != null && response.contains("No trash type provided");
+                }
+            }
+            return false;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    private boolean isGoSortServer(String ip) {
+        return !isDefaultGateway(ip) && checkGoSortServer(ip);
+    }
+
+    public void stopScan() {
+        isScanning = false;
+        if (executor != null) {
+            executor.shutdownNow();
+            try {
+                if (!executor.awaitTermination(100, TimeUnit.MILLISECONDS)) {
+                    Log.w(TAG, "Executor did not terminate in the specified time.");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Log.w(TAG, "Executor termination interrupted", e);
+            }
+        }
     }
 
     private String getLocalIP() {
@@ -110,47 +187,5 @@ public class NetworkScanner {
         }
 
         return null;
-    }
-
-    private boolean isGoSortServer(String ip) {
-        try {
-            URL url = new URL("http://" + ip + "/GoSort_Web/gs_DB/trash_detected.php");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setConnectTimeout(TIMEOUT_MS);
-            connection.setReadTimeout(TIMEOUT_MS);
-            connection.setRequestMethod("GET");
-
-            int responseCode = connection.getResponseCode();
-
-            // Check if it's a success response (200) or a "No trash type provided" error (400)
-            if (responseCode == 200) {
-                return true;
-            } else if (responseCode == 400) {
-                // Read the response to check for the specific error message
-                try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(connection.getErrorStream()))) {
-                    String response = reader.readLine();
-                    return response != null && response.contains("No trash type provided");
-                }
-            }
-            return false;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
-    public void stopScan() {
-        isScanning = false;
-        if (executor != null) {
-            executor.shutdownNow();
-            try {
-                if (!executor.awaitTermination(100, TimeUnit.MILLISECONDS)) {
-                    Log.w(TAG, "Executor did not terminate in the specified time.");
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                Log.w(TAG, "Executor termination interrupted", e);
-            }
-        }
     }
 }

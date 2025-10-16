@@ -26,4 +26,5 @@
     <string name="manual_ip">Enter IP manually</string>
     <string name="gosort_servers">GoSort servers found:</string>
     <string name="other_devices">Other devices found:</string>
+    <string name="invalid_server">Invalid GoSort server. Please enter a valid server IP address.</string>
 </resources>

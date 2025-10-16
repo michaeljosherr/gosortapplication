@@ -21,6 +21,7 @@ public class SetupActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private Button btnScan;
     private final List<String> goSortServers = new ArrayList<>();
+    private boolean isIpVerified = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +35,9 @@ public class SetupActivity extends AppCompatActivity {
         btnScan = findViewById(R.id.btnScan);
         ipAddressInput = findViewById(R.id.ipAddressInput);
         progressBar = findViewById(R.id.progressBar);
+
+        // Disable ViewPager2 swipe initially
+        pager.setUserInputEnabled(false);
 
         List<OnboardingAdapter.Page> pages = new ArrayList<>();
         pages.add(new OnboardingAdapter.Page("Welcome! Let's Get You Started", "Set up your device in a few easy steps."));
@@ -57,19 +61,21 @@ public class SetupActivity extends AppCompatActivity {
                 super.onPageSelected(position);
                 for (int i = 0; i < dots.length; i++) {
                     dots[i].setBackgroundResource(i == position ? R.drawable.unread_dot : R.drawable.dot_unselected);
+                    // Dim dots 3 and 4 if IP is not verified
+                    dots[i].setAlpha(i >= 2 && !isIpVerified ? 0.5f : 1.0f);
                 }
 
                 if (position == 1) { // Connect Device page
                     ipAddressInput.setVisibility(View.VISIBLE);
-                    btnScan.setVisibility(View.VISIBLE); // Show scan button on connection page
+                    btnScan.setVisibility(View.VISIBLE);
                     btn.setText(R.string.connect);
                 } else if (position == pages.size() - 1) {
                     ipAddressInput.setVisibility(View.GONE);
-                    btnScan.setVisibility(View.GONE); // Hide scan button
+                    btnScan.setVisibility(View.GONE);
                     btn.setText(R.string.get_started);
                 } else {
                     ipAddressInput.setVisibility(View.GONE);
-                    btnScan.setVisibility(View.GONE); // Hide scan button
+                    btnScan.setVisibility(View.GONE);
                     btn.setText(position == 0 ? R.string.setup_device : R.string.next);
                 }
             }
@@ -139,41 +145,72 @@ public class SetupActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.VISIBLE);
                 btn.setEnabled(false);
 
-                apiClient.testConnection(ipAddress, new GoSortApiClient.ApiCallback() {
+                // First verify if this is a valid GoSort server
+                networkScanner.isGoSortServer(ipAddress, new NetworkScanner.ServerValidationCallback() {
                     @Override
-                    public void onSuccess() {
+                    public void onResult(boolean isValid) {
                         runOnUiThread(() -> {
-                            progressBar.setVisibility(View.GONE);
-                            btn.setEnabled(true);
-                            // Save IP for future use
-                            getSharedPreferences("GoSort", MODE_PRIVATE)
-                                .edit()
-                                .putString("device_ip", ipAddress)
-                                .apply();
+                            if (!isValid) {
+                                progressBar.setVisibility(View.GONE);
+                                btn.setEnabled(true);
+                                Toast.makeText(SetupActivity.this,
+                                    R.string.invalid_server, Toast.LENGTH_LONG).show();
+                                return;
+                            }
 
-                            // Navigate to LoginActivity instead of continuing onboarding
-                            Intent loginIntent = new Intent(SetupActivity.this, LoginActivity.class);
-                            startActivity(loginIntent);
-                            finish();
-                        });
-                    }
+                            // Test connection if server is valid
+                            apiClient.testConnection(ipAddress, new GoSortApiClient.ApiCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    runOnUiThread(() -> {
+                                        progressBar.setVisibility(View.GONE);
+                                        btn.setEnabled(true);
 
-                    @Override
-                    public void onError(String message) {
-                        runOnUiThread(() -> {
-                            progressBar.setVisibility(View.GONE);
-                            btn.setEnabled(true);
-                            Toast.makeText(SetupActivity.this,
-                                getString(R.string.connection_failed, message),
-                                Toast.LENGTH_LONG).show();
+                                        // Save IP and mark as verified
+                                        getSharedPreferences("GoSort", MODE_PRIVATE)
+                                            .edit()
+                                            .putString("device_ip", ipAddress)
+                                            .apply();
+
+                                        // Enable navigation and update UI
+                                        isIpVerified = true;
+                                        pager.setUserInputEnabled(true);
+
+                                        // Enable all dots
+                                        for (View dot : dots) {
+                                            dot.setAlpha(1.0f);
+                                        }
+
+                                        // Continue to next page
+                                        pager.setCurrentItem(pos + 1, true);
+                                    });
+                                }
+
+                                @Override
+                                public void onError(String message) {
+                                    runOnUiThread(() -> {
+                                        progressBar.setVisibility(View.GONE);
+                                        btn.setEnabled(true);
+                                        Toast.makeText(SetupActivity.this,
+                                            getString(R.string.connection_failed, message),
+                                            Toast.LENGTH_LONG).show();
+                                    });
+                                }
+                            });
                         });
                     }
                 });
             } else if (pos < pages.size() - 1) {
+                // Check if trying to navigate to disabled pages
+                if (!isIpVerified && pos >= 1) {
+                    Toast.makeText(this, R.string.enter_ip_address, Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 pager.setCurrentItem(pos + 1, true);
             } else {
-                Intent i = new Intent(SetupActivity.this, MainActivity.class);
-                startActivity(i);
+                // On the final page, now navigate to login
+                Intent loginIntent = new Intent(SetupActivity.this, LoginActivity.class);
+                startActivity(loginIntent);
                 finish();
             }
         });
