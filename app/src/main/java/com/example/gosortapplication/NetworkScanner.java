@@ -1,17 +1,25 @@
 package com.example.gosortapplication;
 
-import android.os.Handler;
-import android.os.Looper;
+import android.util.Log;
+import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
 import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class NetworkScanner {
-    private final ExecutorService executor;
-    private final Handler mainHandler;
-    private final GoSortApiClient apiClient;
+    private static final String TAG = "NetworkScanner";
+    private static final int TIMEOUT_MS = 200;
+    private ExecutorService executor;
+    private boolean isScanning = false;
 
     public interface ScanCallback {
         void onDeviceFound(String ipAddress);
@@ -20,69 +28,107 @@ public class NetworkScanner {
         void onError(String message);
     }
 
-    public NetworkScanner() {
-        this.executor = Executors.newFixedThreadPool(50);  // Same as Python's max_workers
-        this.mainHandler = new Handler(Looper.getMainLooper());
-        this.apiClient = new GoSortApiClient();
-    }
-
     public void scanNetwork(ScanCallback callback) {
-        // Get local IP - similar to Python's socket.getsockname()
-        String localIP = getLocalIP();
-        if (localIP == null) {
-            mainHandler.post(() -> callback.onError("Could not determine local IP"));
+        if (isScanning) {
+            callback.onError("Scan already in progress");
             return;
         }
 
-        String subnet = localIP.substring(0, localIP.lastIndexOf(".") + 1);
-        AtomicInteger progress = new AtomicInteger(0);
-        AtomicInteger activeThreads = new AtomicInteger(0);
+        executor = Executors.newFixedThreadPool(50);
+        isScanning = true;
 
-        for (int i = 1; i < 255; i++) {
-            String targetIP = subnet + i;
-            activeThreads.incrementAndGet();
+        new Thread(() -> {
+            String localIP = getLocalIP();
+            if (localIP == null || localIP.isEmpty()) {
+                callback.onError("Could not determine local IP address");
+                stopScan();
+                return;
+            }
 
-            executor.execute(() -> {
-                try {
-                    // Directly test each IP - match Python's behavior exactly
-                    apiClient.testConnection(targetIP, new GoSortApiClient.ApiCallback() {
-                        @Override
-                        public void onSuccess() {
-                            mainHandler.post(() -> callback.onDeviceFound(targetIP));
-                        }
+            String subnet = localIP.substring(0, localIP.lastIndexOf(".") + 1);
+            final int totalIPs = 254;
+            AtomicInteger scannedIPs = new AtomicInteger(0);
 
-                        @Override
-                        public void onError(String message) {
-                            // Silently ignore non-GoSort servers like Python does
-                        }
-                    });
-                } catch (Exception e) {
-                    // Silently ignore errors like Python does
-                }
+            for (int i = 1; i <= 254; i++) {
+                if (!isScanning) break;
 
-                int currentProgress = progress.incrementAndGet();
-                mainHandler.post(() -> callback.onScanProgress((currentProgress * 100) / 254));
+                final String ip = subnet + i;
+                final int currentIP = i;
 
-                if (activeThreads.decrementAndGet() == 0) {
-                    mainHandler.post(callback::onScanComplete);
-                }
-            });
-        }
+                executor.execute(() -> {
+                    if (isGoSortServer(ip)) {
+                        callback.onDeviceFound(ip);
+                    }
+                    int progress = (int) ((currentIP / (float) totalIPs) * 100);
+                    callback.onScanProgress(progress);
+
+                    if (scannedIPs.incrementAndGet() == totalIPs) {
+                        callback.onScanComplete();
+                        stopScan();
+                    }
+                });
+            }
+        }).start();
     }
 
     private String getLocalIP() {
         try {
-            Socket socket = new Socket();
-            socket.connect(new InetSocketAddress("8.8.8.8", 53), 1000);
-            String localIP = socket.getLocalAddress().getHostAddress();
-            socket.close();
-            return localIP;
-        } catch (Exception e) {
-            return null;
+            // First try using DatagramSocket approach (no actual connection needed)
+            try (final DatagramSocket socket = new DatagramSocket()) {
+                socket.connect(InetAddress.getByName("10.255.255.255"), 10002);
+                String ip = socket.getLocalAddress().getHostAddress();
+                if (ip != null && !ip.equals("0.0.0.0")) {
+                    return ip;
+                }
+            } catch (Exception e) {
+                Log.d(TAG, "DatagramSocket approach failed: " + e.getMessage());
+            }
+
+            // Fallback: iterate through network interfaces
+            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+            for (NetworkInterface intf : interfaces) {
+                List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
+                for (InetAddress addr : addrs) {
+                    if (addr != null) {
+                        String sAddr = addr.getHostAddress();
+                        if (sAddr != null) {
+                            // Filter for IPv4 addresses that are not loopback
+                            boolean isIPv4 = sAddr.indexOf(':') < 0;
+                            if (isIPv4 && !addr.isLoopbackAddress() && sAddr.startsWith("192.168.")) {
+                                return sAddr;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SocketException e) {
+            Log.e(TAG, "Error getting local IP: " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    private boolean isGoSortServer(String ip) {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(ip, 80), TIMEOUT_MS);
+            return true;
+        } catch (IOException e) {
+            return false;
         }
     }
 
-    public void shutdown() {
-        executor.shutdownNow();
+    public void stopScan() {
+        isScanning = false;
+        if (executor != null) {
+            executor.shutdownNow();
+            try {
+                if (!executor.awaitTermination(100, TimeUnit.MILLISECONDS)) {
+                    Log.w(TAG, "Executor did not terminate in the specified time.");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Log.w(TAG, "Executor termination interrupted", e);
+            }
+        }
     }
 }
