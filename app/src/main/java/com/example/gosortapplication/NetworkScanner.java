@@ -1,13 +1,17 @@
 package com.example.gosortapplication;
 
 import android.util.Log;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.DatagramSocket;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -17,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class NetworkScanner {
     private static final String TAG = "NetworkScanner";
-    private static final int TIMEOUT_MS = 200;
+    private static final int TIMEOUT_MS = 500; // Increased timeout for HTTP requests
     private ExecutorService executor;
     private boolean isScanning = false;
 
@@ -109,9 +113,27 @@ public class NetworkScanner {
     }
 
     private boolean isGoSortServer(String ip) {
-        try (Socket socket = new Socket()) {
-            socket.connect(new InetSocketAddress(ip, 80), TIMEOUT_MS);
-            return true;
+        try {
+            URL url = new URL("http://" + ip + "/GoSort_Web/gs_DB/trash_detected.php");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(TIMEOUT_MS);
+            connection.setReadTimeout(TIMEOUT_MS);
+            connection.setRequestMethod("GET");
+
+            int responseCode = connection.getResponseCode();
+
+            // Check if it's a success response (200) or a "No trash type provided" error (400)
+            if (responseCode == 200) {
+                return true;
+            } else if (responseCode == 400) {
+                // Read the response to check for the specific error message
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(connection.getErrorStream()))) {
+                    String response = reader.readLine();
+                    return response != null && response.contains("No trash type provided");
+                }
+            }
+            return false;
         } catch (IOException e) {
             return false;
         }

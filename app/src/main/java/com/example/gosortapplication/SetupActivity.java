@@ -150,7 +150,11 @@ public class SetupActivity extends AppCompatActivity {
                                 .edit()
                                 .putString("device_ip", ipAddress)
                                 .apply();
-                            pager.setCurrentItem(pos + 1, true);
+
+                            // Navigate to LoginActivity instead of continuing onboarding
+                            Intent loginIntent = new Intent(SetupActivity.this, LoginActivity.class);
+                            startActivity(loginIntent);
+                            finish();
                         });
                     }
 
