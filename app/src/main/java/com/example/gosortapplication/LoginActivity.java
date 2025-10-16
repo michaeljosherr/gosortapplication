@@ -15,10 +15,20 @@ public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "LoginActivity";
     private GoSortApiClient apiClient;
     private ProgressBar progressBar;
+    private static final String PREF_NAME = "GoSort";
+    private static final String KEY_IS_LOGGED_IN = "is_logged_in";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Check if already logged in
+        if (getSharedPreferences(PREF_NAME, MODE_PRIVATE).getBoolean(KEY_IS_LOGGED_IN, false)) {
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_login);
 
         apiClient = new GoSortApiClient();
@@ -57,12 +67,14 @@ public class LoginActivity extends AppCompatActivity {
 
                         try {
                             Log.d(TAG, "Login successful. User data: " + userData.toString());
-                            // userData is already the data object, use it directly
-                            getSharedPreferences("GoSort", MODE_PRIVATE)
+                            // Save user data and login status
+                            getSharedPreferences(PREF_NAME, MODE_PRIVATE)
                                 .edit()
                                 .putBoolean("isAdmin", userData.optBoolean("isAdmin", false))
                                 .putString("userName", userData.getString("username"))
                                 .putString("lastName", userData.getString("lastName"))
+                                .putString("token", userData.getString("token"))
+                                .putBoolean(KEY_IS_LOGGED_IN, true)
                                 .apply();
 
                             Log.i(TAG, "User preferences saved, navigating to MainActivity");
