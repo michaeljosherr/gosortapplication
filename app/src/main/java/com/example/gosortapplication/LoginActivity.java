@@ -17,6 +17,19 @@ public class LoginActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private static final String PREF_NAME = "GoSort";
     private static final String KEY_IS_LOGGED_IN = "is_logged_in";
+    private static final String KEY_USER_ID = "userId";
+    private static final String KEY_USERNAME = "username";
+    private static final String KEY_LASTNAME = "lastName";
+    private static final String KEY_ROLE = "role";
+    private static final String KEY_ASSIGNED_FLOOR = "assignedFloor";
+    private static final String KEY_TOKEN = "token";
+    // New sorter-related keys
+    private static final String KEY_SORTER_DEVICE_NAME = "sorter_device_name";
+    private static final String KEY_SORTER_DEVICE_ID = "sorter_device_id";
+    private static final String KEY_SORTER_LOCATION = "sorter_location";
+    private static final String KEY_SORTER_STATUS = "sorter_status";
+    private static final String KEY_SORTER_MAINTENANCE = "sorter_maintenance";
+    private static final String KEY_SORTER_FLOOR = "sorter_floor";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,15 +80,33 @@ public class LoginActivity extends AppCompatActivity {
 
                         try {
                             Log.d(TAG, "Login successful. User data: " + userData.toString());
-                            // Save user data and login status
-                            getSharedPreferences(PREF_NAME, MODE_PRIVATE)
-                                .edit()
-                                .putBoolean("isAdmin", userData.optBoolean("isAdmin", false))
-                                .putString("userName", userData.getString("username"))
-                                .putString("lastName", userData.getString("lastName"))
-                                .putString("token", userData.getString("token"))
-                                .putBoolean(KEY_IS_LOGGED_IN, true)
-                                .apply();
+                            // The userData already contains the data object contents
+                            JSONObject sorter = userData.optJSONObject("sorter");
+
+                            // Start building shared preferences editor
+                            android.content.SharedPreferences.Editor editor = getSharedPreferences(PREF_NAME, MODE_PRIVATE).edit();
+
+                            // Save basic user data
+                            editor.putString(KEY_USER_ID, userData.getString("userId"))
+                                  .putString(KEY_USERNAME, userData.getString("username"))
+                                  .putString(KEY_LASTNAME, userData.getString("lastName"))
+                                  .putString(KEY_ROLE, userData.getString("role"))
+                                  .putString(KEY_ASSIGNED_FLOOR, userData.getString("assignedFloor"))
+                                  .putString(KEY_TOKEN, userData.getString("token"))
+                                  .putBoolean(KEY_IS_LOGGED_IN, true);
+
+                            // Save sorter data if available
+                            if (sorter != null) {
+                                editor.putString(KEY_SORTER_DEVICE_NAME, sorter.getString("device_name"))
+                                      .putString(KEY_SORTER_DEVICE_ID, sorter.getString("device_identity"))
+                                      .putString(KEY_SORTER_LOCATION, sorter.getString("location"))
+                                      .putString(KEY_SORTER_STATUS, sorter.getString("status"))
+                                      .putString(KEY_SORTER_MAINTENANCE, String.valueOf(sorter.getBoolean("maintenance_mode")))
+                                      .putString(KEY_SORTER_FLOOR, sorter.getString("assigned_floor"));
+                            }
+
+                            // Apply all changes
+                            editor.apply();
 
                             Log.i(TAG, "User preferences saved, navigating to MainActivity");
                             // Navigate to MainActivity

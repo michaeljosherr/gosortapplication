@@ -21,7 +21,7 @@ import android.util.Log;
 
 public class GoSortApiClient {
     private static final String TAG = "GoSortApiClient";
-    private static final String API_PATH = "/GoSort_Web/gs_DB/";
+    private static final String API_PATH = "GoSort_Web/api/";  // Removed leading slash to match new structure
     private final OkHttpClient client;
     private String baseIp;  // Renamed from baseUrl to baseIp
 
@@ -48,7 +48,7 @@ public class GoSortApiClient {
 
     public void testConnection(String ip, ApiCallback callback) {
         setBaseUrl(ip);
-        String url = "http://" + baseIp + "/GoSort_Web/gs_DB/trash_detected.php";
+        String url = "http://" + baseIp + "/" + API_PATH + "trash_detected.php";  // Added slash after baseIp
 
         Request request = new Request.Builder()
             .url(url)
@@ -71,16 +71,16 @@ public class GoSortApiClient {
     }
 
     public void verifyRegistration(String deviceIdentity, ApiCallback callback) {
-        String url = "http://" + baseIp + "/GoSort_Web/gs_DB/verify_sorter.php";
+        String url = "http://" + baseIp + "/" + API_PATH + "verify_sorter.php";  // Added slash after baseIp
         // Implementation for device registration verification
         // Will be added when implementing the registration flow
     }
 
     public void login(String userName, String password, LoginCallback callback) {
-        Log.d(TAG, "Starting login request to: " + baseIp + API_PATH + "login_api.php");
+        Log.d(TAG, "Starting login request to: " + baseIp + "/" + API_PATH + "login_api.php");  // Added slash after baseIp
         new Thread(() -> {
             try {
-                URL url = new URL("http://" + baseIp + API_PATH + "login_api.php");
+                URL url = new URL("http://" + baseIp + "/" + API_PATH + "login_api.php");  // Added slash after baseIp
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
@@ -115,8 +115,8 @@ public class GoSortApiClient {
 
                 if (jsonResponse.optBoolean("success", false)) {
                     Log.i(TAG, "Login successful");
-                    JSONObject data = jsonResponse.getJSONObject("data");
-                    callback.onSuccess(data);
+                    // Pass the data object directly from the response
+                    callback.onSuccess(jsonResponse.getJSONObject("data"));
                 } else {
                     String errorMessage = jsonResponse.optString("message", "Unknown error occurred");
                     Log.w(TAG, "Login failed: " + errorMessage);

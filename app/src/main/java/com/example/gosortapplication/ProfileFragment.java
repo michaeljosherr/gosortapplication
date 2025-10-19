@@ -4,30 +4,62 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.LinearLayout;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import com.google.android.material.button.MaterialButton;
+import org.json.JSONObject;
+import org.json.JSONArray;
 
 public class ProfileFragment extends Fragment {
-
+    private static final String TAG = "ProfileFragment";
     private ImageView imgAvatar;
     private ActivityResultLauncher<String> pickImageLauncher;
     private static final String PREF_NAME = "GoSort";
-    private static final String KEY_IS_LOGGED_IN = "is_logged_in";
     private static final String KEY_DEVICE_IP = "device_ip";
+
+    // UI elements for user details
+    private TextView txtUsername;
+    private TextView txtRole;
+    private TextView txtEmail;
+    private TextView txtAssignedFloor;
+    private TextView txtSorterLocation;
+    private LinearLayout assignedSortersContainer;
+    private Handler handler;
+    private Runnable updateRunnable;
+    private UserDetailsApi userDetailsApi;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_profile, container, false);
 
+        // Initialize views
         imgAvatar = root.findViewById(R.id.imgAvatar);
+        txtUsername = root.findViewById(R.id.txtUsername);
+        txtRole = root.findViewById(R.id.txtRole);
+        txtEmail = root.findViewById(R.id.txtEmail);
+        txtAssignedFloor = root.findViewById(R.id.txtAssignedFloor);
+        txtSorterLocation = root.findViewById(R.id.txtSorterLocation);
+        assignedSortersContainer = root.findViewById(R.id.assignedSortersContainer);
+
+        // Initialize API client
+        String serverIp = requireActivity().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+                .getString(KEY_DEVICE_IP, "");
+        userDetailsApi = new UserDetailsApi(serverIp);
+
+        // Setup periodic updates
+        setupPeriodicUpdates();
 
         // Register image picker launcher
         pickImageLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), result -> {
@@ -72,5 +104,100 @@ public class ProfileFragment extends Fragment {
         }
 
         return root;
+    }
+
+    private void setupPeriodicUpdates() {
+        handler = new Handler(Looper.getMainLooper());
+        updateRunnable = new Runnable() {
+            @Override
+            public void run() {
+                fetchUserDetails();
+                handler.postDelayed(this, 2000); // 2 seconds interval
+            }
+        };
+        handler.post(updateRunnable);
+    }
+
+    private void fetchUserDetails() {
+        if (getActivity() == null) return;
+
+        String username = requireActivity().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+                .getString("username", "");
+
+        userDetailsApi.getUserDetails(username, new UserDetailsApi.UserDetailsCallback() {
+            @Override
+            public void onSuccess(JSONObject userDetails) {
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> updateUI(userDetails));
+            }
+
+            @Override
+            public void onError(String message) {
+                Log.e(TAG, "Error fetching user details: " + message);
+            }
+        });
+    }
+
+    private void updateUI(JSONObject userDetails) {
+        try {
+            JSONObject userInfo = userDetails.getJSONObject("user_info");
+            JSONArray sorters = userDetails.getJSONArray("assigned_sorters");
+
+            // Update basic info
+            txtUsername.setText(String.format("%s %s",
+                userInfo.getString("userName"),
+                userInfo.getString("lastName")));
+            txtRole.setText(userInfo.getString("role"));
+            txtEmail.setText(String.format("Email: %s", userInfo.getString("email")));
+            txtAssignedFloor.setText(String.format("Assigned Floor: %s",
+                userInfo.getString("assigned_floor")));
+
+            // Update sorter location if available
+            if (sorters.length() > 0) {
+                JSONObject firstSorter = sorters.getJSONObject(0);
+                txtSorterLocation.setText(String.format("Location: %s",
+                    firstSorter.getString("location")));
+                txtSorterLocation.setVisibility(View.VISIBLE);
+            } else {
+                txtSorterLocation.setVisibility(View.GONE);
+            }
+
+            // Update assigned sorters
+            updateAssignedSorters(sorters);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating UI: " + e.getMessage());
+        }
+    }
+
+    private void updateAssignedSorters(JSONArray sorters) {
+        assignedSortersContainer.removeAllViews();
+        try {
+            for (int i = 0; i < sorters.length(); i++) {
+                JSONObject sorter = sorters.getJSONObject(i);
+                View sorterView = getLayoutInflater().inflate(R.layout.item_assigned_sorter,
+                        assignedSortersContainer, false);
+
+                TextView txtDeviceName = sorterView.findViewById(R.id.txtDeviceName);
+                TextView txtLocation = sorterView.findViewById(R.id.txtLocation);
+                TextView txtStatus = sorterView.findViewById(R.id.txtStatus);
+
+                txtDeviceName.setText(sorter.getString("device_name"));
+                txtLocation.setText(sorter.getString("location"));
+                txtStatus.setText(sorter.getString("status"));
+
+                assignedSortersContainer.addView(sorterView);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating sorters: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (handler != null && updateRunnable != null) {
+            handler.removeCallbacks(updateRunnable);
+        }
     }
 }
