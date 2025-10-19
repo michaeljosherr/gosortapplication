@@ -1,5 +1,6 @@
 package com.example.gosortapplication;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
@@ -17,6 +18,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
+
+        // Check if user is logged in, redirect to login if not
+        if (!getSharedPreferences("GoSort", MODE_PRIVATE).getBoolean("is_logged_in", false)) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_main);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -24,10 +33,10 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-    BottomNavigationView bottomNavigation = findViewById(R.id.bottom_navigation);
+        BottomNavigationView bottomNavigation = findViewById(R.id.bottom_navigation);
 
-    // Initialize notification persistence
-    NotificationRepository.get().init(this);
+        // Initialize notification persistence
+        NotificationRepository.get().init(this);
 
         // Observe notification unread count and update badge
         NotificationRepository.get().addListener(new NotificationRepository.Listener() {
