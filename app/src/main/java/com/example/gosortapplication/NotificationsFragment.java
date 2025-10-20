@@ -1,6 +1,7 @@
 package com.example.gosortapplication;
 
 import android.content.SharedPreferences;
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -67,9 +68,11 @@ public class NotificationsFragment extends Fragment {
     private void checkBinFullness() {
         new Thread(() -> {
             try {
-                SharedPreferences prefs = requireContext().getSharedPreferences("GoSort", requireContext().MODE_PRIVATE);
-                String ipAddress = prefs.getString("ip_address", "");
-                String deviceId = prefs.getString("device_id", "");
+                SharedPreferences prefs = requireContext().getSharedPreferences("GoSort", Context.MODE_PRIVATE);
+                String ipAddress = prefs.getString("device_ip", "");
+                String deviceId = prefs.getString("sorter_device_id", "");
+
+                Log.d(TAG, "Retrieved from prefs - IP: " + ipAddress + ", Device ID: " + deviceId);
 
                 if (ipAddress.isEmpty() || deviceId.isEmpty()) {
                     Log.e(TAG, "IP address or device ID not set in preferences");
