@@ -1,5 +1,6 @@
 package com.example.gosortapplication;
 
+import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import android.content.Context;
 import android.os.Bundle;
@@ -8,6 +9,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+import android.os.Handler;
+import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -24,9 +27,42 @@ import java.util.List;
 
 public class NotificationsFragment extends Fragment {
     private static final String TAG = "NotificationsFragment";
+    private static final int UPDATE_INTERVAL = 5000; // 5 seconds
     private RecyclerView rv;
     private NotificationAdapter adapter;
     private List<NotificationItem> data;
+    private Handler updateHandler;
+    private boolean isUpdating = false;
+
+    private final Runnable updateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isUpdating && isAdded()) {
+                checkBinFullness();
+                updateHandler.postDelayed(this, UPDATE_INTERVAL);
+            }
+        }
+    };
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        updateHandler = new Handler(Looper.getMainLooper());
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        isUpdating = true;
+        updateHandler.post(updateRunnable);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        isUpdating = false;
+        updateHandler.removeCallbacks(updateRunnable);
+    }
 
     @Nullable
     @Override
@@ -43,14 +79,7 @@ public class NotificationsFragment extends Fragment {
         checkBinFullness();
 
         adapter = new NotificationAdapter(data, (item, pos) -> {
-            repo.markRead(pos);
-            adapter.notifyItemChanged(pos);
-
-            NotificationDetailFragment detail = NotificationDetailFragment.newInstance(item.message, item.meta, item.isHighPriority);
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, detail)
-                    .addToBackStack(null)
-                    .commit();
+            showResolutionDialog(pos);
         });
 
         rv.setAdapter(adapter);
@@ -63,6 +92,31 @@ public class NotificationsFragment extends Fragment {
             });
         }
         return v;
+    }
+
+    private void showResolutionDialog(int position) {
+        new AlertDialog.Builder(requireContext())
+            .setTitle("Issue Resolution")
+            .setMessage("Has this issue been resolved?")
+            .setPositiveButton("Yes", (dialog, which) -> {
+                NotificationRepository.get().deleteNotification(position);
+                adapter.notifyDataSetChanged();
+            })
+            .setNegativeButton("No", (dialog, which) -> {
+                NotificationRepository.get().markRead(position);
+                adapter.notifyItemChanged(position);
+
+                NotificationDetailFragment detail = NotificationDetailFragment.newInstance(
+                    data.get(position).message,
+                    data.get(position).meta,
+                    data.get(position).isHighPriority
+                );
+                getParentFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, detail)
+                        .addToBackStack(null)
+                        .commit();
+            })
+            .show();
     }
 
     private void checkBinFullness() {
@@ -125,33 +179,34 @@ public class NotificationsFragment extends Fragment {
 
                             Log.d(TAG, String.format("Latest reading for bin %s: %d%%", binName, fullness));
 
-                            // Check if bin is full (>=90%)
-                            if (fullness >= 90) {
-                                String message = String.format("Bin '%s' is FULL! Current fullness level is %d%%. Please empty immediately.",
-                                    binName, fullness);
-                                String meta = String.format("© %s | Device: %s | Bin: %s | Fullness: %d%%",
-                                    timestamp, deviceId, binName, fullness);
+                            requireActivity().runOnUiThread(() -> {
+                                // Remove any existing notification for this bin first
+                                removeExistingNotification(binName);
 
-                                Log.d(TAG, "Creating notification for bin: " + binName + " at " + fullness + "% full");
+                                // Only create notification if bin is full or malfunctioning
+                                if (fullness == -1) {
+                                    String message = String.format("⚠️ Bin '%s' sensor MALFUNCTION detected! Please check the sensor immediately.",
+                                        binName);
+                                    String meta = String.format("© %s | Device: %s | Bin: %s | Status: Sensor Error",
+                                        timestamp, deviceId, binName);
 
-                                requireActivity().runOnUiThread(() -> {
                                     NotificationItem notif = new NotificationItem(message, meta, true);
-                                    boolean found = false;
-                                    // Look for existing notification for this bin
-                                    for (int i = 0; i < data.size(); i++) {
-                                        NotificationItem existing = data.get(i);
-                                        if (existing.message.contains(binName)) {
-                                            data.set(i, notif); // Update existing
-                                            found = true;
-                                            break;
-                                        }
-                                    }
-                                    if (!found) {
-                                        data.add(0, notif); // Add new at top
-                                    }
+                                    data.add(0, notif);
                                     adapter.notifyDataSetChanged();
-                                });
-                            }
+                                    Log.d(TAG, "Added malfunction notification for bin: " + binName);
+                                }
+                                else if (fullness >= 90) {
+                                    String message = String.format("Bin '%s' is FULL! Current fullness level is %d%%. Please empty immediately.",
+                                        binName, fullness);
+                                    String meta = String.format("© %s | Device: %s | Bin: %s | Fullness: %d%%",
+                                        timestamp, deviceId, binName, fullness);
+
+                                    NotificationItem notif = new NotificationItem(message, meta, true);
+                                    data.add(0, notif);
+                                    adapter.notifyDataSetChanged();
+                                    Log.d(TAG, "Added fullness notification for bin: " + binName);
+                                }
+                            });
                         }
                     }
                 }
@@ -159,5 +214,16 @@ public class NotificationsFragment extends Fragment {
                 Log.e(TAG, "Error checking bin fullness: " + e.getMessage(), e);
             }
         }).start();
+    }
+
+    private void removeExistingNotification(String binName) {
+        // Remove any existing notification for this bin
+        for (int i = data.size() - 1; i >= 0; i--) {
+            NotificationItem existing = data.get(i);
+            if (existing.message.contains(binName)) {
+                data.remove(i);
+                break;
+            }
+        }
     }
 }

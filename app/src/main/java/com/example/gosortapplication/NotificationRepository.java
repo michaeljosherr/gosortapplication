@@ -34,19 +34,7 @@ public class NotificationRepository {
         if (prefs != null) return; // already initialized
         prefs = ctx.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         loadFromPrefs();
-    // If there are no persisted notifications, create a few sample items so the app has content
-    if (items.isEmpty()) {
-        items.add(new NotificationItem("Bin 'Bio' is FULL! Distance reading has been consistently between 0-10cm for the last 5 readings. Please empty immediately.",
-            "© 2025-10-11 15:35:24 | Device: sorter | Bin: Bio | Fullness: 100%", true));
-        items.add(new NotificationItem("Bin 'Recyclable' is FULL! Distance reading has been consistently between 0-10cm for the last 5 readings. Please empty immediately.",
-            "© 2025-10-11 15:35:24 | Device: sorter | Bin: Recyclable | Fullness: 100%", true));
-        items.add(new NotificationItem("Bin 'Extra' is FULL! Distance reading has been consistently between 0-10cm for the last 5 readings. Please empty immediately.",
-            "© 2025-10-11 15:35:23 | Device: sorter | Bin: Extra | Fullness: 100%", true));
-        saveToPrefs();
-    }
-
-    // Notify listeners so UI (MainActivity) can update badge immediately after init/load
-    notifyListeners();
+        notifyListeners();
     }
 
     public void setInitial(List<NotificationItem> start) {
@@ -131,6 +119,14 @@ public class NotificationRepository {
             }
         } catch (JSONException e) {
             // ignore parse errors
+        }
+    }
+
+    public void deleteNotification(int position) {
+        if (position >= 0 && position < items.size()) {
+            items.remove(position);
+            saveToPrefs();
+            notifyListeners();
         }
     }
 }
