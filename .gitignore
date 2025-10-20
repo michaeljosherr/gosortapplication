@@ -12,3 +12,10 @@
 .idea/misc.xml
 build/reports/problems/problems-report.html
 local.properties
+.gradle/8.13/executionHistory/executionHistory.bin
+.gradle/8.13/executionHistory/executionHistory.lock
+.gradle/8.13/fileHashes/fileHashes.bin
+.gradle/8.13/fileHashes/fileHashes.lock
+.gradle/8.13/fileHashes/resourceHashesCache.bin
+.gradle/buildOutputCleanup/buildOutputCleanup.lock
+.gradle/file-system.probe
