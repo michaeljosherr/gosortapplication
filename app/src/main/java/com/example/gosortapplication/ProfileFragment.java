@@ -144,18 +144,18 @@ public class ProfileFragment extends Fragment {
             JSONArray sorters = userDetails.getJSONArray("assigned_sorters");
 
             // Update basic info
-            txtUsername.setText(String.format("%s %s",
+            txtUsername.setText(getString(R.string.full_name_format,
                 userInfo.getString("userName"),
                 userInfo.getString("lastName")));
             txtRole.setText(userInfo.getString("role"));
-            txtEmail.setText(String.format("Email: %s", userInfo.getString("email")));
-            txtAssignedFloor.setText(String.format("Assigned Floor: %s",
+            txtEmail.setText(getString(R.string.email_format, userInfo.getString("email")));
+            txtAssignedFloor.setText(getString(R.string.assigned_floor_format,
                 userInfo.getString("assigned_floor")));
 
             // Update sorter location if available
             if (sorters.length() > 0) {
                 JSONObject firstSorter = sorters.getJSONObject(0);
-                txtSorterLocation.setText(String.format("Location: %s",
+                txtSorterLocation.setText(getString(R.string.location_format,
                     firstSorter.getString("location")));
                 txtSorterLocation.setVisibility(View.VISIBLE);
             } else {

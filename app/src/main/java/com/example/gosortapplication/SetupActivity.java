@@ -40,10 +40,18 @@ public class SetupActivity extends AppCompatActivity {
         pager.setUserInputEnabled(false);
 
         List<OnboardingAdapter.Page> pages = new ArrayList<>();
-        pages.add(new OnboardingAdapter.Page("Welcome! Let's Get You Started", "Set up your device in a few easy steps."));
-        pages.add(new OnboardingAdapter.Page("Connect Device", "Enter your GoSort device's IP address to connect."));
-        pages.add(new OnboardingAdapter.Page("Monitor Status", "See fullness and real-time stats."));
-        pages.add(new OnboardingAdapter.Page("You're Ready", "Finish setup and start sorting!"));
+        pages.add(new OnboardingAdapter.Page(
+            getString(R.string.onboarding_welcome_title),
+            getString(R.string.onboarding_welcome_desc)));
+        pages.add(new OnboardingAdapter.Page(
+            getString(R.string.onboarding_connect_title),
+            getString(R.string.onboarding_connect_desc)));
+        pages.add(new OnboardingAdapter.Page(
+            getString(R.string.onboarding_monitor_title),
+            getString(R.string.onboarding_monitor_desc)));
+        pages.add(new OnboardingAdapter.Page(
+            getString(R.string.onboarding_ready_title),
+            getString(R.string.onboarding_ready_desc)));
 
         OnboardingAdapter adapter = new OnboardingAdapter(pages);
         pager.setAdapter(adapter);
@@ -146,60 +154,56 @@ public class SetupActivity extends AppCompatActivity {
                 btn.setEnabled(false);
 
                 // First verify if this is a valid GoSort server
-                networkScanner.isGoSortServer(ipAddress, new NetworkScanner.ServerValidationCallback() {
-                    @Override
-                    public void onResult(boolean isValid) {
-                        runOnUiThread(() -> {
-                            if (!isValid) {
+                networkScanner.isGoSortServer(ipAddress, isValid -> runOnUiThread(() -> {
+                    if (!isValid) {
+                        progressBar.setVisibility(View.GONE);
+                        btn.setEnabled(true);
+                        Toast.makeText(SetupActivity.this,
+                            R.string.invalid_server, Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    // Test connection if server is valid
+                    apiClient.testConnection(ipAddress, new GoSortApiClient.ApiCallback() {
+                        @Override
+                        public void onSuccess() {
+                            runOnUiThread(() -> {
+                                progressBar.setVisibility(View.GONE);
+                                btn.setEnabled(true);
+
+                                // Save IP and mark as verified
+                                getSharedPreferences("GoSort", MODE_PRIVATE)
+                                    .edit()
+                                    .putString("device_ip", ipAddress)
+                                    .apply();
+
+                                // Enable navigation and update UI
+                                isIpVerified = true;
+                                pager.setUserInputEnabled(true);
+
+                                // Enable all dots
+                                for (View dot : dots) {
+                                    dot.setAlpha(1.0f);
+                                }
+
+                                // Continue to next page
+                                pager.setCurrentItem(pos + 1, true);
+                            });
+                        }
+
+                        @Override
+                        public void onError(String message) {
+                            runOnUiThread(() -> {
                                 progressBar.setVisibility(View.GONE);
                                 btn.setEnabled(true);
                                 Toast.makeText(SetupActivity.this,
-                                    R.string.invalid_server, Toast.LENGTH_LONG).show();
-                                return;
-                            }
-
-                            // Test connection if server is valid
-                            apiClient.testConnection(ipAddress, new GoSortApiClient.ApiCallback() {
-                                @Override
-                                public void onSuccess() {
-                                    runOnUiThread(() -> {
-                                        progressBar.setVisibility(View.GONE);
-                                        btn.setEnabled(true);
-
-                                        // Save IP and mark as verified
-                                        getSharedPreferences("GoSort", MODE_PRIVATE)
-                                            .edit()
-                                            .putString("device_ip", ipAddress)
-                                            .apply();
-
-                                        // Enable navigation and update UI
-                                        isIpVerified = true;
-                                        pager.setUserInputEnabled(true);
-
-                                        // Enable all dots
-                                        for (View dot : dots) {
-                                            dot.setAlpha(1.0f);
-                                        }
-
-                                        // Continue to next page
-                                        pager.setCurrentItem(pos + 1, true);
-                                    });
-                                }
-
-                                @Override
-                                public void onError(String message) {
-                                    runOnUiThread(() -> {
-                                        progressBar.setVisibility(View.GONE);
-                                        btn.setEnabled(true);
-                                        Toast.makeText(SetupActivity.this,
-                                            getString(R.string.connection_failed, message),
-                                            Toast.LENGTH_LONG).show();
-                                    });
-                                }
+                                    getString(R.string.connection_failed, message),
+                                    Toast.LENGTH_LONG).show();
                             });
-                        });
-                    }
-                });
+                        }
+                    });
+                }));
+
             } else if (pos < pages.size() - 1) {
                 // Check if trying to navigate to disabled pages
                 if (!isIpVerified && pos >= 1) {

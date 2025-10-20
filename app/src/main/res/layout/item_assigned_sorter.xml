@@ -20,7 +20,8 @@
             android:layout_height="wrap_content"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:textColor="#000000"/>
+            android:textColor="#000000"
+            android:contentDescription="@string/device_name_label"/>
 
         <TextView
             android:id="@+id/txtLocation"
@@ -28,7 +29,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textSize="14sp"
-            android:textColor="#666666"/>
+            android:textColor="#666666"
+            android:contentDescription="@string/location_label"/>
 
         <TextView
             android:id="@+id/txtStatus"
@@ -36,8 +38,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textSize="14sp"
-            android:textColor="#14AE31"/>
-
+            android:textColor="#666666"
+            android:contentDescription="@string/status_label"/>
     </LinearLayout>
-
 </androidx.cardview.widget.CardView>
