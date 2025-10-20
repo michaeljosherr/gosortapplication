@@ -7,13 +7,16 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import android.os.Handler;
 import android.os.Looper;
+import androidx.annotation.NonNull;
 
 public class AnalyticsModel {
     private static final String TAG = "AnalyticsModel";
@@ -112,31 +115,35 @@ public class AnalyticsModel {
 
         client.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(Call call, IOException e) {
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 Log.e(TAG, "Failed to fetch statistics", e);
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
                 try {
-                    String responseBody = response.body().string();
+                    ResponseBody body = response.body();
+                    if (body == null) {
+                        Log.e(TAG, "Empty response body");
+                        return;
+                    }
+
+                    String responseBody = body.string();
                     Log.d(TAG, "Received response: " + responseBody);
 
                     JSONObject json = new JSONObject(responseBody);
                     if (json.getBoolean("success")) {
                         JSONObject data = json.getJSONObject("data");
-                        Log.d(TAG, "Parsed statistics data: " + data.toString());
+                        Log.d(TAG, "Parsed statistics data: " + data);
 
                         // Reset values
-                        for (int i = 0; i < values.length; i++) {
-                            values[i] = 0;
-                        }
+                        Arrays.fill(values, 0);
 
-                        // Update values from API response - now only 4 categories
-                        if (data.has("biodegradable")) values[0] = data.getInt("biodegradable");
-                        if (data.has("non-biodegradable")) values[1] = data.getInt("non-biodegradable");
-                        if (data.has("mixed")) values[2] = data.getInt("mixed");
-                        if (data.has("hazardous")) values[3] = data.getInt("hazardous");
+                        // Update values from API response - only 4 trash categories
+                        if (data.has("biodegradable")) values[0] = data.optInt("biodegradable", 0);
+                        if (data.has("non-biodegradable")) values[1] = data.optInt("non-biodegradable", 0);
+                        if (data.has("mixed")) values[2] = data.optInt("mixed", 0);
+                        if (data.has("hazardous")) values[3] = data.optInt("hazardous", 0);
 
                         // Convert to percentages
                         int total = 0;

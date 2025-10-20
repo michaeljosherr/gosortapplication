@@ -15,13 +15,13 @@ public class AnalyticsFragment extends Fragment {
     private static final String TAG = "AnalyticsFragment";
     private ConcentricDonutView donut;
     private View root;
-    private final int[] cols = new int[]{0xFFF39C12, 0xFF4A90E2, 0xFF27AE60, 0xFFF7E34A, 0xFFE74C3C};
+    // Updated to 4 colors to match the four trash categories
+    private final int[] cols = new int[]{0xFFF39C12, 0xFF4A90E2, 0xFF27AE60, 0xFFE74C3C};
 
     // Store TextView references to avoid repeated findViewById calls
     private TextView tvBiodeg;
     private TextView tvNonBiodeg;
     private TextView tvMixed;
-    private TextView tvUnidentified;
     private TextView tvHazardous;
     private AnalyticsModel model;
     private AnalyticsModel.Listener analyticsListener;
@@ -73,13 +73,12 @@ public class AnalyticsFragment extends Fragment {
         tvBiodeg = root.findViewById(R.id.tvBiodeg);
         tvNonBiodeg = root.findViewById(R.id.tvNonBiodeg);
         tvMixed = root.findViewById(R.id.tvMixed);
-        tvUnidentified = root.findViewById(R.id.tvUnidentified);
         tvHazardous = root.findViewById(R.id.tvHazardous);
     }
 
     private void logValues(String prefix, int[] values) {
-        if (values == null || values.length != 5) {
-            Log.e(TAG, prefix + ": Invalid values array");
+        if (values == null || values.length != 4) {
+            Log.e(TAG, prefix + ": Invalid values array (expected 4)");
             return;
         }
 
@@ -87,8 +86,7 @@ public class AnalyticsFragment extends Fragment {
               "Bio=" + values[0] + "%, " +
               "NonBio=" + values[1] + "%, " +
               "Mixed=" + values[2] + "%, " +
-              "Unidentified=" + values[3] + "%, " +
-              "Hazardous=" + values[4] + "%");
+              "Hazardous=" + values[3] + "%");
     }
 
     private void handleError(String message) {
@@ -99,7 +97,7 @@ public class AnalyticsFragment extends Fragment {
     }
 
     private void updateUI(int[] values) {
-        if (getActivity() == null || root == null || values == null || values.length != 5) {
+        if (getActivity() == null || root == null || values == null || values.length != 4) {
             Log.e(TAG, "Invalid state in updateUI");
             return;
         }
@@ -114,8 +112,7 @@ public class AnalyticsFragment extends Fragment {
                 if (tvBiodeg != null) tvBiodeg.setText(getString(R.string.percentage_format, values[0]));
                 if (tvNonBiodeg != null) tvNonBiodeg.setText(getString(R.string.percentage_format, values[1]));
                 if (tvMixed != null) tvMixed.setText(getString(R.string.percentage_format, values[2]));
-                if (tvUnidentified != null) tvUnidentified.setText(getString(R.string.percentage_format, values[3]));
-                if (tvHazardous != null) tvHazardous.setText(getString(R.string.percentage_format, values[4]));
+                if (tvHazardous != null) tvHazardous.setText(getString(R.string.percentage_format, values[3]));
 
                 Log.d(TAG, "Updated percentage labels");
             } catch (Exception e) {
@@ -135,7 +132,6 @@ public class AnalyticsFragment extends Fragment {
         tvBiodeg = null;
         tvNonBiodeg = null;
         tvMixed = null;
-        tvUnidentified = null;
         tvHazardous = null;
         root = null;
     }
