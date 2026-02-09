@@ -76,7 +76,7 @@ public class GoSortApiClient {
         // Will be added when implementing the registration flow
     }
 
-    public void login(String userName, String password, LoginCallback callback) {
+    public void login(String email, String password, LoginCallback callback) {
         Log.d(TAG, "Starting login request to: " + baseIp + "/" + API_PATH + "login_api.php");  // Added slash after baseIp
         new Thread(() -> {
             try {
@@ -86,9 +86,9 @@ public class GoSortApiClient {
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setDoOutput(true);
 
-                // Create login payload - using 'username' to match API expectation
+                // Create login payload - using 'email' to match API expectation
                 JSONObject loginData = new JSONObject();
-                loginData.put("username", userName);  // Changed from userName to username
+                loginData.put("email", email);
                 loginData.put("password", password);
 
                 Log.d(TAG, "Sending login request with payload: " + loginData.toString());

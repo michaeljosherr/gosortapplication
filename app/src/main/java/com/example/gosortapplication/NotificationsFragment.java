@@ -33,6 +33,7 @@ public class NotificationsFragment extends Fragment {
     private List<NotificationItem> data;
     private Handler updateHandler;
     private boolean isUpdating = false;
+    private NotificationHelper notificationHelper;
 
     private final Runnable updateRunnable = new Runnable() {
         @Override
@@ -48,6 +49,7 @@ public class NotificationsFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         updateHandler = new Handler(Looper.getMainLooper());
+        notificationHelper = new NotificationHelper(requireContext());
     }
 
     @Override
@@ -194,6 +196,12 @@ public class NotificationsFragment extends Fragment {
                                     data.add(0, notif);
                                     adapter.notifyDataSetChanged();
                                     Log.d(TAG, "Added malfunction notification for bin: " + binName);
+
+                                    // Show system notification for malfunction
+                                    notificationHelper.showBinAlert(
+                                        "Bin Sensor Malfunction",
+                                        String.format("Bin '%s' sensor is not responding properly. Please check!", binName)
+                                    );
                                 }
                                 else if (fullness >= 90) {
                                     String message = String.format("Bin '%s' is FULL! Current fullness level is %d%%. Please empty immediately.",
@@ -205,6 +213,12 @@ public class NotificationsFragment extends Fragment {
                                     data.add(0, notif);
                                     adapter.notifyDataSetChanged();
                                     Log.d(TAG, "Added fullness notification for bin: " + binName);
+
+                                    // Show system notification for full bin
+                                    notificationHelper.showBinAlert(
+                                        "Bin Full Alert",
+                                        String.format("Bin '%s' is %d%% full. Please empty!", binName, fullness)
+                                    );
                                 }
                             });
                         }

@@ -51,27 +51,27 @@ public class LoginActivity extends AppCompatActivity {
         apiClient.setBaseUrl(serverIp);
         Log.d(TAG, "Using server IP: " + serverIp);
 
-        EditText userNameInput = findViewById(R.id.usernameInput);
+        EditText emailInput = findViewById(R.id.emailInput);
         EditText passwordInput = findViewById(R.id.passwordInput);
         Button loginButton = findViewById(R.id.loginButton);
         progressBar = findViewById(R.id.progressBar);
 
         loginButton.setOnClickListener(v -> {
-            String userName = userNameInput.getText().toString().trim();
+            String email = emailInput.getText().toString().trim();
             String password = passwordInput.getText().toString();
 
-            if (userName.isEmpty() || password.isEmpty()) {
+            if (email.isEmpty() || password.isEmpty()) {
                 Log.w(TAG, "Login attempt with empty credentials");
-                Toast.makeText(this, "Please enter username and password", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Please enter email and password", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            Log.i(TAG, "Attempting login for user: " + userName);
+            Log.i(TAG, "Attempting login for email: " + email);
             // Show loading state
             progressBar.setVisibility(View.VISIBLE);
             loginButton.setEnabled(false);
 
-            apiClient.login(userName, password, new GoSortApiClient.LoginCallback() {
+            apiClient.login(email, password, new GoSortApiClient.LoginCallback() {
                 @Override
                 public void onSuccess(JSONObject userData) {
                     runOnUiThread(() -> {
