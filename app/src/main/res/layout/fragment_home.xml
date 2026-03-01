@@ -124,17 +124,32 @@
                     android:textColor="#000000"
                     android:fontFamily="@font/poppins" />
 
-                <ProgressBar
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="16dp"
-                    android:id="@+id/progBiodeg"
-                    android:progress="70"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
                     android:layout_marginTop="12dp"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:progressDrawable="@drawable/progress_orange" />
+                    android:gravity="center_vertical">
 
+                    <ProgressBar
+                        android:id="@+id/progBiodeg"
+                        android:layout_width="0dp"
+                        android:layout_height="16dp"
+                        android:layout_weight="1"
+                        android:progress="0"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:progressDrawable="@drawable/progress_orange" />
+
+                    <TextView
+                        android:id="@+id/txtBiodegStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:textColor="#000000"
+                        android:layout_marginStart="8dp"
+                        android:minWidth="48dp"/>
+                </LinearLayout>
             </LinearLayout>
-
         </androidx.cardview.widget.CardView>
 
         <!-- Non-Biodegradable -->
@@ -158,22 +173,37 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Non- Biodegradable"
+                    android:text="Non-Biodegradable"
                     android:textSize="15sp"
                     android:textColor="#000000"
                     android:fontFamily="@font/poppins" />
 
-                <ProgressBar
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="16dp"
-                    android:id="@+id/progNonBiodeg"
-                    android:progress="45"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
                     android:layout_marginTop="12dp"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:progressDrawable="@drawable/progress_blue" />
+                    android:gravity="center_vertical">
 
+                    <ProgressBar
+                        android:id="@+id/progNonBiodeg"
+                        android:layout_width="0dp"
+                        android:layout_height="16dp"
+                        android:layout_weight="1"
+                        android:progress="0"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:progressDrawable="@drawable/progress_blue" />
+
+                    <TextView
+                        android:id="@+id/txtNonBiodegStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:textColor="#000000"
+                        android:layout_marginStart="8dp"
+                        android:minWidth="48dp"/>
+                </LinearLayout>
             </LinearLayout>
-
         </androidx.cardview.widget.CardView>
 
         <!-- Mixed Waste -->
@@ -202,63 +232,39 @@
                     android:textColor="#000000"
                     android:fontFamily="@font/poppins" />
 
-                <ProgressBar
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="16dp"
-                    android:id="@+id/progMixed"
-                    android:progress="85"
-                    android:layout_marginTop="12dp"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:progressDrawable="@drawable/progress_green" />
-
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
-
-        <!-- Unidentified Waste -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="2dp"
-            app:cardUseCompatPadding="true">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:background="@drawable/card_inner_bg"
-                android:clickable="true"
-                android:focusable="true">
-
-                <TextView
-                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Unidentified Waste"
-                    android:textSize="15sp"
-                    android:textColor="#000000"
-                    android:fontFamily="@font/poppins" />
-
-                <ProgressBar
-                    android:layout_width="match_parent"
-                    android:layout_height="16dp"
-                    android:id="@+id/progUnidentified"
-                    android:progress="30"
+                    android:orientation="horizontal"
                     android:layout_marginTop="12dp"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:progressDrawable="@drawable/progress_yellow" />
+                    android:gravity="center_vertical">
 
+                    <ProgressBar
+                        android:id="@+id/progMixed"
+                        android:layout_width="0dp"
+                        android:layout_height="16dp"
+                        android:layout_weight="1"
+                        android:progress="0"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:progressDrawable="@drawable/progress_green" />
+
+                    <TextView
+                        android:id="@+id/txtMixedStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:textColor="#000000"
+                        android:layout_marginStart="8dp"
+                        android:minWidth="48dp"/>
+                </LinearLayout>
             </LinearLayout>
-
         </androidx.cardview.widget.CardView>
 
         <!-- Hazardous Waste -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="12dp"
             app:cardCornerRadius="10dp"
             app:cardElevation="2dp"
             app:cardUseCompatPadding="true">
@@ -280,133 +286,35 @@
                     android:textColor="#000000"
                     android:fontFamily="@font/poppins" />
 
-                <ProgressBar
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="16dp"
-                    android:id="@+id/progHazardous"
-                    android:progress="5"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
                     android:layout_marginTop="12dp"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:progressDrawable="@drawable/progress_red" />
+                    android:gravity="center_vertical">
 
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
-
-        <!-- Recent Notifications -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Recent Notifications"
-            android:textSize="16sp"
-            android:textColor="#000000"
-            android:textStyle="bold"
-            android:fontFamily="@font/poppins"
-            android:layout_marginBottom="16dp" />
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp"
-            app:cardUseCompatPadding="true"
-            android:background="@drawable/notification_unread">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Mixed Waste Bin is at 90% level, please take out the trash bag."
-                    android:textSize="14sp"
-                    android:textColor="#2C3E50"
-                    android:fontFamily="@font/poppins" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="8dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Aug 8, 2025"
-                        android:textSize="12sp"
-                        android:textColor="#7F8C8D"
+                    <ProgressBar
+                        android:id="@+id/progHazardous"
+                        android:layout_width="0dp"
+                        android:layout_height="16dp"
                         android:layout_weight="1"
-                        android:fontFamily="@font/poppins" />
+                        android:progress="0"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:progressDrawable="@drawable/progress_red" />
 
                     <TextView
+                        android:id="@+id/txtHazardousStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Mark as Read"
                         android:textSize="12sp"
-                        android:textColor="#14AE31"
-                        android:fontFamily="@font/poppins" />
-
+                        android:textColor="#000000"
+                        android:layout_marginStart="8dp"
+                        android:minWidth="48dp"/>
                 </LinearLayout>
-
             </LinearLayout>
-
         </androidx.cardview.widget.CardView>
 
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp"
-            app:cardUseCompatPadding="true"
-            android:background="@drawable/notification_unread">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Biodegradable Bin is at 90% level, please take out the trash bag."
-                    android:textSize="14sp"
-                    android:textColor="#2C3E50"
-                    android:fontFamily="@font/poppins" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="8dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Aug 8, 2025"
-                        android:textSize="12sp"
-                        android:textColor="#7F8C8D"
-                        android:layout_weight="1"
-                        android:fontFamily="@font/poppins" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Mark as Read"
-                        android:textSize="12sp"
-                        android:textColor="#14AE31"
-                        android:fontFamily="@font/poppins" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
+        <!-- Recent Activity Section -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -429,6 +337,7 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
+                <!-- First Activity Item -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -436,7 +345,6 @@
                     android:layout_marginBottom="12dp">
 
                     <ImageView
-                        android:layout_marginStart="8dp"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:src="@drawable/ic_analytics"
@@ -454,7 +362,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Sorted 50 numbers"
+                            android:text="Mixed Waste Bin at 90%"
                             android:textSize="14sp"
                             android:textColor="#2C3E50"
                             android:textStyle="bold" />
@@ -465,9 +373,7 @@
                             android:text="2 minutes ago"
                             android:textSize="12sp"
                             android:textColor="#7F8C8D" />
-
                     </LinearLayout>
-
                 </LinearLayout>
 
                 <View
@@ -476,6 +382,7 @@
                     android:background="#E0E0E0"
                     android:layout_marginVertical="8dp" />
 
+                <!-- Second Activity Item -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -499,7 +406,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Sorted text list"
+                            android:text="Biodegradable Bin at 85%"
                             android:textSize="14sp"
                             android:textColor="#2C3E50"
                             android:textStyle="bold" />
@@ -510,15 +417,9 @@
                             android:text="15 minutes ago"
                             android:textSize="12sp"
                             android:textColor="#7F8C8D" />
-
                     </LinearLayout>
-
                 </LinearLayout>
-
             </LinearLayout>
-
         </androidx.cardview.widget.CardView>
-
     </LinearLayout>
-
 </ScrollView>

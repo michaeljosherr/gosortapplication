@@ -67,7 +67,7 @@
                     android:layout_gravity="center"
                     android:layout_marginBottom="12dp" />
 
-                <!-- Bin Legend (5 categories) -->
+                <!-- Bin Legend (4 categories) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -163,36 +163,6 @@
 
                         </LinearLayout>
 
-                        <!-- Unidentified -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:layout_marginBottom="8dp">
-
-                            <View
-                                android:layout_width="12dp"
-                                android:layout_height="12dp"
-                                android:background="#F7E34A" />
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_weight="1"
-                                android:layout_height="wrap_content"
-                                android:text="Unidentified Waste"
-                                android:layout_marginStart="8dp"
-                                android:fontFamily="@font/poppins" />
-
-                            <TextView
-                                android:id="@+id/tvUnidentified"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="30%"
-                                android:fontFamily="@font/poppins" />
-
-                        </LinearLayout>
-
                         <!-- Hazardous -->
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -228,131 +198,6 @@
 
         </androidx.cardview.widget.CardView>
 
-        <!-- Sort Types -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp"
-            app:cardUseCompatPadding="true">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Sort Algorithm Usage"
-                    android:textSize="18sp"
-                    android:textColor="#2C3E50"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="16dp" />
-
-                <!-- Quick Sort -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Quick Sort"
-                        android:textSize="14sp"
-                        android:textColor="#2C3E50" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="65%"
-                        android:textSize="14sp"
-                        android:textColor="#4A90E2"
-                        android:textStyle="bold" />
-
-                </LinearLayout>
-
-                <ProgressBar
-                    android:layout_width="match_parent"
-                    android:layout_height="8dp"
-                    android:progress="65"
-                    android:progressTint="#4A90E2"
-                    android:layout_marginBottom="16dp"
-                    style="?android:attr/progressBarStyleHorizontal" />
-
-                <!-- Merge Sort -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Merge Sort"
-                        android:textSize="14sp"
-                        android:textColor="#2C3E50" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="25%"
-                        android:textSize="14sp"
-                        android:textColor="#27AE60"
-                        android:textStyle="bold" />
-
-                </LinearLayout>
-
-                <ProgressBar
-                    android:layout_width="match_parent"
-                    android:layout_height="8dp"
-                    android:progress="25"
-                    android:progressTint="#27AE60"
-                    android:layout_marginBottom="16dp"
-                    style="?android:attr/progressBarStyleHorizontal" />
-
-                <!-- Bubble Sort -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Bubble Sort"
-                        android:textSize="14sp"
-                        android:textColor="#2C3E50" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="10%"
-                        android:textSize="14sp"
-                        android:textColor="#F39C12"
-                        android:textStyle="bold" />
-
-                </LinearLayout>
-
-                <ProgressBar
-                    android:layout_width="match_parent"
-                    android:layout_height="8dp"
-                    android:progress="10"
-                    android:progressTint="#F39C12"
-                    style="?android:attr/progressBarStyleHorizontal" />
-
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
 
         <!-- Weekly Activity -->
         <androidx.cardview.widget.CardView
@@ -379,129 +224,178 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="120dp"
+                    android:layout_height="160dp"
                     android:orientation="horizontal"
-                    android:gravity="bottom">
+                    android:gravity="bottom"
+                    android:baselineAligned="false">
 
-                    <View
+                    <!-- Day 0 (6 days ago) -->
+                    <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="80dp"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:background="#E3F2FD"
-                        android:layout_marginEnd="4dp" />
+                        android:orientation="vertical"
+                        android:gravity="bottom|center_horizontal">
 
-                    <View
+                        <View
+                            android:id="@+id/bar_day0"
+                            android:layout_width="24dp"
+                            android:layout_height="80dp"
+                            android:background="#4A90E2"
+                            android:layout_marginBottom="4dp"/>
+
+                        <TextView
+                            android:id="@+id/label_day0"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12sp"
+                            android:textColor="#7F8C8D"
+                            android:text="Mon"/>
+                    </LinearLayout>
+
+                    <!-- Day 1 (5 days ago) -->
+                    <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="60dp"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:background="#E8F5E8"
-                        android:layout_marginHorizontal="4dp" />
+                        android:orientation="vertical"
+                        android:gravity="bottom|center_horizontal">
 
-                    <View
+                        <View
+                            android:id="@+id/bar_day1"
+                            android:layout_width="24dp"
+                            android:layout_height="60dp"
+                            android:background="#4A90E2"
+                            android:layout_marginBottom="4dp"/>
+
+                        <TextView
+                            android:id="@+id/label_day1"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12sp"
+                            android:textColor="#7F8C8D"
+                            android:text="Tue"/>
+                    </LinearLayout>
+
+                    <!-- Day 2 (4 days ago) -->
+                    <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="100dp"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:background="#4A90E2"
-                        android:layout_marginHorizontal="4dp" />
+                        android:orientation="vertical"
+                        android:gravity="bottom|center_horizontal">
 
-                    <View
+                        <View
+                            android:id="@+id/bar_day2"
+                            android:layout_width="24dp"
+                            android:layout_height="100dp"
+                            android:background="#4A90E2"
+                            android:layout_marginBottom="4dp"/>
+
+                        <TextView
+                            android:id="@+id/label_day2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12sp"
+                            android:textColor="#7F8C8D"
+                            android:text="Wed"/>
+                    </LinearLayout>
+
+                    <!-- Day 3 (3 days ago) -->
+                    <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="40dp"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:background="#E3F2FD"
-                        android:layout_marginHorizontal="4dp" />
+                        android:orientation="vertical"
+                        android:gravity="bottom|center_horizontal">
 
-                    <View
+                        <View
+                            android:id="@+id/bar_day3"
+                            android:layout_width="24dp"
+                            android:layout_height="40dp"
+                            android:background="#4A90E2"
+                            android:layout_marginBottom="4dp"/>
+
+                        <TextView
+                            android:id="@+id/label_day3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12sp"
+                            android:textColor="#7F8C8D"
+                            android:text="Thu"/>
+                    </LinearLayout>
+
+                    <!-- Day 4 (2 days ago) -->
+                    <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="90dp"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:background="#27AE60"
-                        android:layout_marginHorizontal="4dp" />
+                        android:orientation="vertical"
+                        android:gravity="bottom|center_horizontal">
 
-                    <View
+                        <View
+                            android:id="@+id/bar_day4"
+                            android:layout_width="24dp"
+                            android:layout_height="90dp"
+                            android:background="#4A90E2"
+                            android:layout_marginBottom="4dp"/>
+
+                        <TextView
+                            android:id="@+id/label_day4"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12sp"
+                            android:textColor="#7F8C8D"
+                            android:text="Fri"/>
+                    </LinearLayout>
+
+                    <!-- Day 5 (yesterday) -->
+                    <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="70dp"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:background="#E8F5E8"
-                        android:layout_marginHorizontal="4dp" />
+                        android:orientation="vertical"
+                        android:gravity="bottom|center_horizontal">
 
-                    <View
+                        <View
+                            android:id="@+id/bar_day5"
+                            android:layout_width="24dp"
+                            android:layout_height="70dp"
+                            android:background="#4A90E2"
+                            android:layout_marginBottom="4dp"/>
+
+                        <TextView
+                            android:id="@+id/label_day5"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12sp"
+                            android:textColor="#7F8C8D"
+                            android:text="Sat"/>
+                    </LinearLayout>
+
+                    <!-- Day 6 (today) -->
+                    <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="85dp"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:background="#4A90E2"
-                        android:layout_marginStart="4dp" />
+                        android:orientation="vertical"
+                        android:gravity="bottom|center_horizontal">
 
-                </LinearLayout>
+                        <View
+                            android:id="@+id/bar_day6"
+                            android:layout_width="24dp"
+                            android:layout_height="85dp"
+                            android:background="#4A90E2"
+                            android:layout_marginBottom="4dp"/>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="8dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Mon"
-                        android:textSize="10sp"
-                        android:textColor="#7F8C8D"
-                        android:textAlignment="center" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Tue"
-                        android:textSize="10sp"
-                        android:textColor="#7F8C8D"
-                        android:textAlignment="center" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Wed"
-                        android:textSize="10sp"
-                        android:textColor="#7F8C8D"
-                        android:textAlignment="center" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Thu"
-                        android:textSize="10sp"
-                        android:textColor="#7F8C8D"
-                        android:textAlignment="center" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Fri"
-                        android:textSize="10sp"
-                        android:textColor="#7F8C8D"
-                        android:textAlignment="center" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Sat"
-                        android:textSize="10sp"
-                        android:textColor="#7F8C8D"
-                        android:textAlignment="center" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Sun"
-                        android:textSize="10sp"
-                        android:textColor="#7F8C8D"
-                        android:textAlignment="center" />
+                        <TextView
+                            android:id="@+id/label_day6"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12sp"
+                            android:textColor="#7F8C8D"
+                            android:text="Sun"/>
+                    </LinearLayout>
 
                 </LinearLayout>
 

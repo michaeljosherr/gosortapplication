@@ -84,19 +84,19 @@
 
         </LinearLayout>
 
-        <!-- Username Input -->
+        <!-- Email Input -->
         <EditText
-            android:id="@+id/usernameInput"
+            android:id="@+id/emailInput"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:hint="Username"
+            android:hint="Email"
             android:textColorHint="@color/text_hint"
             android:textColor="@color/text_primary"
             android:textSize="16sp"
             android:background="@drawable/edittext_background"
-            android:inputType="text"
+            android:inputType="textEmailAddress"
             android:fontFamily="@font/poppins"
-            android:drawableStart="@drawable/c_user"
+            android:drawableStart="@drawable/ic_email"
             android:drawablePadding="12dp"
             android:layout_marginBottom="16dp" />
 
