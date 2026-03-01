@@ -45,11 +45,6 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         apiClient = new GoSortApiClient();
-        // Get the saved IP address
-        String serverIp = getSharedPreferences("GoSort", MODE_PRIVATE)
-            .getString("device_ip", "");
-        apiClient.setBaseUrl(serverIp);
-        Log.d(TAG, "Using server IP: " + serverIp);
 
         EditText emailInput = findViewById(R.id.emailInput);
         EditText passwordInput = findViewById(R.id.passwordInput);

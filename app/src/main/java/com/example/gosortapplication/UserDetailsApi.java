@@ -9,8 +9,7 @@ import java.net.URL;
 
 public class UserDetailsApi {
     private static final String TAG = "UserDetailsApi";
-    private final String baseIp;
-    private static final String API_PATH = "GoSort_Web/api/";
+    private static final String BASE_URL = "https://gosortweb-production.up.railway.app/api/";
 
     public interface UserDetailsCallback {
         void onSuccess(JSONObject userDetails);
@@ -18,14 +17,13 @@ public class UserDetailsApi {
     }
 
     public UserDetailsApi(String baseIp) {
-        this.baseIp = baseIp;
+        // baseIp is no longer used; API is hosted at a fixed URL
     }
 
     public void getUserDetails(String username, UserDetailsCallback callback) {
         new Thread(() -> {
             try {
-                String urlStr = String.format("http://%s/%s/user_details_api.php?username=%s",
-                        baseIp, API_PATH, username);
+                String urlStr = BASE_URL + "user_details_api.php?username=" + username;
                 URL url = new URL(urlStr);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");

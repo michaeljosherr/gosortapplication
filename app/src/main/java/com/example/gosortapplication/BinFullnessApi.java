@@ -10,8 +10,7 @@ import java.net.URL;
 
 public class BinFullnessApi {
     private static final String TAG = "BinFullnessApi";
-    private final String baseIp;
-    private static final String API_PATH = "GoSort_Web/api/";
+    private static final String BASE_URL = "https://gosortweb-production.up.railway.app/api/";
 
     public interface BinFullnessCallback {
         void onSuccess(JSONArray binData);
@@ -19,14 +18,13 @@ public class BinFullnessApi {
     }
 
     public BinFullnessApi(String baseIp) {
-        this.baseIp = baseIp;
+        // baseIp is no longer used; API is hosted at a fixed URL
     }
 
     public void getBinFullness(String deviceIdentity, BinFullnessCallback callback) {
         new Thread(() -> {
             try {
-                String urlStr = String.format("http://%s/%s/bin_fullness.php?device_identity=%s",
-                        baseIp, API_PATH, deviceIdentity);
+                String urlStr = BASE_URL + "bin_fullness.php?device_identity=" + deviceIdentity;
                 Log.d(TAG, "Making API request to: " + urlStr);
                 URL url = new URL(urlStr);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();

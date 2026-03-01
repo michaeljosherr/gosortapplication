@@ -21,9 +21,8 @@ import android.util.Log;
 
 public class GoSortApiClient {
     private static final String TAG = "GoSortApiClient";
-    private static final String API_PATH = "GoSort_Web/api/";  // Removed leading slash to match new structure
+    private static final String BASE_URL = "https://gosortweb-production.up.railway.app/api/";
     private final OkHttpClient client;
-    private String baseIp;  // Renamed from baseUrl to baseIp
 
     public interface ApiCallback {
         void onSuccess();
@@ -43,12 +42,11 @@ public class GoSortApiClient {
     }
 
     public void setBaseUrl(String ip) {
-        this.baseIp = ip;  // Store just the IP
+        // No-op: API now uses a fixed hosted base URL
     }
 
     public void testConnection(String ip, ApiCallback callback) {
-        setBaseUrl(ip);
-        String url = "http://" + baseIp + "/" + API_PATH + "trash_detected.php";  // Added slash after baseIp
+        String url = BASE_URL + "trash_detected.php";
 
         Request request = new Request.Builder()
             .url(url)
@@ -71,16 +69,16 @@ public class GoSortApiClient {
     }
 
     public void verifyRegistration(String deviceIdentity, ApiCallback callback) {
-        String url = "http://" + baseIp + "/" + API_PATH + "verify_sorter.php";  // Added slash after baseIp
+        String url = BASE_URL + "verify_sorter.php";
         // Implementation for device registration verification
         // Will be added when implementing the registration flow
     }
 
     public void login(String email, String password, LoginCallback callback) {
-        Log.d(TAG, "Starting login request to: " + baseIp + "/" + API_PATH + "login_api.php");  // Added slash after baseIp
+        Log.d(TAG, "Starting login request to: " + BASE_URL + "login_api.php");
         new Thread(() -> {
             try {
-                URL url = new URL("http://" + baseIp + "/" + API_PATH + "login_api.php");  // Added slash after baseIp
+                URL url = new URL(BASE_URL + "login_api.php");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");

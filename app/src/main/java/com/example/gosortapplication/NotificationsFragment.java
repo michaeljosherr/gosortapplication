@@ -27,6 +27,7 @@ import java.util.List;
 
 public class NotificationsFragment extends Fragment {
     private static final String TAG = "NotificationsFragment";
+    private static final String BASE_URL = "https://gosortweb-production.up.railway.app/api/";
     private static final int UPDATE_INTERVAL = 5000; // 5 seconds
     private RecyclerView rv;
     private NotificationAdapter adapter;
@@ -125,17 +126,16 @@ public class NotificationsFragment extends Fragment {
         new Thread(() -> {
             try {
                 SharedPreferences prefs = requireContext().getSharedPreferences("GoSort", Context.MODE_PRIVATE);
-                String ipAddress = prefs.getString("device_ip", "");
                 String deviceId = prefs.getString("sorter_device_id", "");
 
-                Log.d(TAG, "Retrieved from prefs - IP: " + ipAddress + ", Device ID: " + deviceId);
+                Log.d(TAG, "Retrieved from prefs - Device ID: " + deviceId);
 
-                if (ipAddress.isEmpty() || deviceId.isEmpty()) {
-                    Log.e(TAG, "IP address or device ID not set in preferences");
+                if (deviceId.isEmpty()) {
+                    Log.e(TAG, "Device ID not set in preferences");
                     return;
                 }
 
-                String apiUrl = "http://" + ipAddress + "/GoSort_Web/api/bin_fullness.php?device_identity=" + deviceId;
+                String apiUrl = BASE_URL + "bin_fullness.php?device_identity=" + deviceId;
                 Log.d(TAG, "Checking bin fullness API: " + apiUrl);
 
                 URL url = new URL(apiUrl);

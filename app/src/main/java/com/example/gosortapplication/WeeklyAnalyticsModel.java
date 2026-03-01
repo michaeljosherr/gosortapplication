@@ -70,10 +70,10 @@ public class WeeklyAnalyticsModel {
     }
 
     private String getBaseUrl() {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        String ip = prefs.getString("device_ip", "");
-        Log.d(TAG, "Retrieved device_ip from SharedPreferences: " + ip);
-        return "http://" + ip + "/GoSort_Web/api/";
+        // Hosted API base URL (no longer depends on device_ip)
+        String baseUrl = "https://gosortweb-production.up.railway.app/api/";
+        Log.d(TAG, "Using hosted base URL: " + baseUrl);
+        return baseUrl;
     }
 
     private String getDeviceIdentity() {
@@ -122,11 +122,6 @@ public class WeeklyAnalyticsModel {
         }
 
         String baseUrl = getBaseUrl();
-        if (baseUrl.startsWith("http://:/")) {
-            Log.e(TAG, "Invalid IP address in SharedPreferences");
-            return;
-        }
-
         String url = baseUrl + "statistics_api.php?type=daily_sorting&device_identity=" + deviceId;
         Log.d(TAG, "Fetching weekly statistics from: " + url);
 

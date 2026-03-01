@@ -19,12 +19,12 @@ import android.content.Context;
 
 public class HomeFragment extends Fragment {
     private static final String TAG = "HomeFragment";
+    private static final String PREF_NAME = "GoSort";
     private TextView greetingText;
     private TextView assignedAreaText;
     private Handler handler;
     private Runnable updateRunnable;
     private BinFullnessApi binFullnessApi;
-    private static final String PREF_NAME = "GoSort";
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -41,10 +41,8 @@ public class HomeFragment extends Fragment {
                 return root;
             }
 
-            // Initialize API client
-            String serverIp = requireActivity().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-                    .getString("device_ip", "");
-            binFullnessApi = new BinFullnessApi(serverIp);
+            // Initialize API client (hosted API uses a fixed base URL)
+            binFullnessApi = new BinFullnessApi("");
 
             // Set default text
             greetingText.setText("Hey!");
