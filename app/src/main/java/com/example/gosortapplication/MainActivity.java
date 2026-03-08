@@ -35,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_main);
+
+        // Apply insets — top/sides to root, block bottom so nav bar handles its own position
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -42,6 +44,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         BottomNavigationView bottomNavigation = findViewById(R.id.bottom_navigation);
+
+        // Consume insets on nav view to prevent internal double-padding in portrait
+        ViewCompat.setOnApplyWindowInsetsListener(bottomNavigation, (v, insets) -> {
+            return WindowInsetsCompat.CONSUMED;
+        });
 
         // Initialize notification persistence
         NotificationRepository.get().init(this);
@@ -108,7 +115,6 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == NOTIFICATION_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                // Permission denied, show a message to the user
                 Toast.makeText(this, "Notification permission is required for bin alerts",
                         Toast.LENGTH_LONG).show();
             }

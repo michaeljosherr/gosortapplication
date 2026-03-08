@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/dialog_rounded_bg">
+
+    <!-- Icon -->
+    <TextView
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/chip_unselected_bg"
+        android:gravity="center"
+        android:text="🗑️"
+        android:textSize="26sp" />
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="@font/poppin_semibold"
+        android:gravity="center"
+        android:text="Notification Action"
+        android:textColor="#1A1A1A"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <!-- Subtitle -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:fontFamily="@font/poppin"
+        android:gravity="center"
+        android:lineSpacingMultiplier="1.4"
+        android:text="What would you like to do with this notification?"
+        android:textColor="#757575"
+        android:textSize="13sp" />
+
+    <!-- View Details -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnViewDetails"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginBottom="10dp"
+        android:fontFamily="@font/poppin_semibold"
+        android:text="View Details"
+        android:textColor="#FFFFFF"
+        android:textSize="13sp"
+        app:backgroundTint="#14AE31"
+        app:cornerRadius="12dp" />
+
+    <!-- Mark as Resolved -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnResolved"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginBottom="10dp"
+        android:fontFamily="@font/poppin_semibold"
+        android:text="Mark as Resolved"
+        android:textColor="#14AE31"
+        android:textSize="13sp"
+        app:cornerRadius="12dp"
+        app:strokeColor="#14AE31"
+        app:strokeWidth="1dp" />
+
+    <!-- Cancel -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnDialogCancel"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:fontFamily="@font/poppin_semibold"
+        android:text="Cancel"
+        android:textColor="#9E9E9E"
+        android:textSize="13sp"
+        app:cornerRadius="12dp"
+        app:strokeColor="#E0E0E0"
+        app:strokeWidth="1dp" />
+
+</LinearLayout>
