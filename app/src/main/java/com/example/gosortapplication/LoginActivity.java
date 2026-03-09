@@ -71,10 +71,18 @@ public class LoginActivity extends AppCompatActivity {
 
                         try {
                             Log.d(TAG, "Full userData: " + userData.toString(2));
-
-                            // GoSortApiClient already unwraps "data" so userData IS the inner object
                             Log.d(TAG, "username: " + userData.optString("username"));
                             Log.d(TAG, "email: "    + userData.optString("email"));
+
+                            // Role restriction — mobile app is for Utility Members only
+                            String role = userData.optString("role", "").toLowerCase().trim();
+                            if (!role.equals("utility")) {
+                                Toast.makeText(LoginActivity.this,
+                                        "Access denied. This app is for Utility Members only.",
+                                        Toast.LENGTH_LONG).show();
+                                Log.w(TAG, "Login blocked for role: " + role);
+                                return;
+                            }
 
                             JSONObject sorter = userData.optJSONObject("sorter");
 

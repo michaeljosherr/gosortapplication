@@ -31,7 +31,9 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -41,8 +43,13 @@ public class MainActivity extends AppCompatActivity {
     private static final String BASE_URL                 = "https://web-production-15f71.up.railway.app/api/";
     private static final int    UPDATE_INTERVAL          = 5000;
 
-    // Shared polling state — lives here so it survives fragment switches
+    // All assigned device IDs for this user — populated on start
+    private final List<String> assignedDeviceIds = new ArrayList<>();
+
+    // Tracks last-notified fullness per "deviceId|binName" key to avoid
+    // duplicate notifications and push-alert spam across all devices
     private final Map<String, Integer> lastNotifiedFullness = new HashMap<>();
+
     private Handler pollingHandler;
     private NotificationHelper notificationHelper;
     private boolean isPolling = false;
@@ -51,7 +58,12 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             if (isPolling) {
-                checkBinFullness();
+                // Poll every assigned device on each tick
+                synchronized (assignedDeviceIds) {
+                    for (String deviceId : assignedDeviceIds) {
+                        checkBinFullnessForDevice(deviceId);
+                    }
+                }
                 pollingHandler.postDelayed(this, UPDATE_INTERVAL);
             }
         }
@@ -62,7 +74,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
 
-        // Check if user is logged in, redirect to login if not
         if (!getSharedPreferences("GoSort", MODE_PRIVATE).getBoolean("is_logged_in", false)) {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
@@ -71,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        // Apply insets
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -79,17 +89,15 @@ public class MainActivity extends AppCompatActivity {
         });
 
         BottomNavigationView bottomNavigation = findViewById(R.id.bottom_navigation);
-
-        ViewCompat.setOnApplyWindowInsetsListener(bottomNavigation, (v, insets) -> {
-            return WindowInsetsCompat.CONSUMED;
-        });
+        ViewCompat.setOnApplyWindowInsetsListener(bottomNavigation, (v, insets) ->
+                WindowInsetsCompat.CONSUMED);
 
         // Initialize repository and polling helpers
         NotificationRepository.get().init(this);
         notificationHelper = new NotificationHelper(this);
         pollingHandler = new Handler(Looper.getMainLooper());
 
-        // Observe unread count → update badge from anywhere
+        // Observe unread count → update badge from any fragment
         NotificationRepository.get().addListener(newCount -> runOnUiThread(() -> {
             if (newCount <= 0) {
                 if (bottomNavigation.getBadge(R.id.nav_notifications) != null)
@@ -99,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }));
 
-        // Load default fragment (Home)
+        // Load default fragment
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new HomeFragment())
@@ -125,7 +133,6 @@ public class MainActivity extends AppCompatActivity {
                         .replace(R.id.fragment_container, selectedFragment)
                         .commit();
             }
-
             return true;
         });
 
@@ -138,6 +145,9 @@ public class MainActivity extends AppCompatActivity {
                         NOTIFICATION_PERMISSION_CODE);
             }
         }
+
+        // Fetch all assigned devices for this user, then start polling
+        fetchAssignedDevices();
     }
 
     @Override
@@ -154,19 +164,83 @@ public class MainActivity extends AppCompatActivity {
         pollingHandler.removeCallbacks(pollingRunnable);
     }
 
-    // ─── Bin fullness polling ─────────────────────────────────────────────────
+    // ─── Fetch all assigned devices for this user ─────────────────────────────
 
-    private void checkBinFullness() {
+    private void fetchAssignedDevices() {
+        SharedPreferences prefs = getSharedPreferences("GoSort", MODE_PRIVATE);
+        String username = prefs.getString("username", "");
+
+        if (username.isEmpty()) {
+            // Fallback: use the single device saved at login if username missing
+            String fallback = prefs.getString("sorter_device_id", "");
+            if (!fallback.isEmpty()) {
+                synchronized (assignedDeviceIds) {
+                    assignedDeviceIds.add(fallback);
+                }
+                Log.w(TAG, "No username found, falling back to single device: " + fallback);
+            }
+            return;
+        }
+
         new Thread(() -> {
             try {
-                SharedPreferences prefs = getSharedPreferences("GoSort", Context.MODE_PRIVATE);
-                String deviceId = prefs.getString("sorter_device_id", "");
+                URL url = new URL(BASE_URL + "user_details_api.php?username=" + username);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
 
-                if (deviceId.isEmpty()) {
-                    Log.e(TAG, "Device ID not set in preferences");
+                BufferedReader br = new BufferedReader(new InputStreamReader(
+                        conn.getResponseCode() == 200
+                                ? conn.getInputStream()
+                                : conn.getErrorStream()));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) sb.append(line);
+                br.close();
+
+                JSONObject json = new JSONObject(sb.toString());
+                if (!json.optBoolean("success", false)) {
+                    Log.e(TAG, "fetchAssignedDevices: API returned failure");
                     return;
                 }
 
+                JSONArray sorters = json.getJSONObject("data").getJSONArray("assigned_sorters");
+
+                synchronized (assignedDeviceIds) {
+                    assignedDeviceIds.clear();
+                    for (int i = 0; i < sorters.length(); i++) {
+                        String id = sorters.getJSONObject(i).optString("device_identity", "");
+                        if (!id.isEmpty()) {
+                            assignedDeviceIds.add(id);
+                            Log.d(TAG, "Assigned device: " + id);
+                        }
+                    }
+                }
+
+                Log.d(TAG, "Total assigned devices: " + assignedDeviceIds.size());
+
+            } catch (Exception e) {
+                Log.e(TAG, "fetchAssignedDevices error: " + e.getMessage());
+
+                // Fallback to single saved device if fetch fails
+                String fallback = getSharedPreferences("GoSort", MODE_PRIVATE)
+                        .getString("sorter_device_id", "");
+                if (!fallback.isEmpty()) {
+                    synchronized (assignedDeviceIds) {
+                        if (!assignedDeviceIds.contains(fallback))
+                            assignedDeviceIds.add(fallback);
+                    }
+                }
+            }
+        }).start();
+    }
+
+    // ─── Bin fullness polling — one call per assigned device ─────────────────
+
+    private void checkBinFullnessForDevice(String deviceId) {
+        new Thread(() -> {
+            try {
                 URL url = new URL(BASE_URL + "bin_fullness.php?device_identity=" + deviceId);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
@@ -186,7 +260,7 @@ public class MainActivity extends AppCompatActivity {
 
                 JSONArray readings = json.getJSONArray("data");
 
-                // Keep only the latest reading per bin (API returns newest first)
+                // Keep only the latest reading per bin
                 HashMap<String, JSONObject> latestPerBin = new HashMap<>();
                 for (int i = 0; i < readings.length(); i++) {
                     JSONObject reading = readings.getJSONObject(i);
@@ -201,8 +275,10 @@ public class MainActivity extends AppCompatActivity {
                     String timestamp= latest.getString("timestamp");
 
                     runOnUiThread(() -> {
-                        // Skip if fullness hasn't changed since last notification
-                        Integer prev = lastNotifiedFullness.get(binName);
+                        // Use "deviceId|binName" as the dedup key so bins with the
+                        // same name on different devices don't interfere with each other
+                        String dedupKey = deviceId + "|" + binName;
+                        Integer prev = lastNotifiedFullness.get(dedupKey);
                         if (prev != null && prev == fullness) return;
 
                         NotificationItem notif = null;
@@ -243,42 +319,46 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         if (notif != null) {
-                            // Remove stale notification for this bin then insert the fresh one
-                            removeExistingNotification(binName);
-                            lastNotifiedFullness.put(binName, fullness);
+                            removeExistingNotification(deviceId, binName);
+                            lastNotifiedFullness.put(dedupKey, fullness);
                             NotificationRepository.get().getAll().add(0, notif);
-                            // Repository handles persistence + badge update via listeners
                             NotificationRepository.get().notifyListenersPublic();
-                            // If NotificationsFragment is currently visible, tell it to refresh
                             Fragment current = getSupportFragmentManager()
                                     .findFragmentById(R.id.fragment_container);
-                            if (current instanceof NotificationsFragment) {
+                            if (current instanceof NotificationsFragment)
                                 ((NotificationsFragment) current).onNewNotification();
-                            }
                         }
                     });
                 }
 
             } catch (Exception e) {
-                Log.e(TAG, "Error checking bin fullness: " + e.getMessage(), e);
+                Log.e(TAG, "checkBinFullness error for device " + deviceId + ": " + e.getMessage());
             }
         }).start();
     }
 
-    private void removeExistingNotification(String binName) {
+    private void removeExistingNotification(String deviceId, String binName) {
         java.util.List<NotificationItem> data = NotificationRepository.get().getAll();
+        // Match on both device ID and bin name to avoid removing notifs from other devices
         for (int i = data.size() - 1; i >= 0; i--) {
-            if (data.get(i).message.contains(binName)) {
+            NotificationItem item = data.get(i);
+            if (item.message.contains(binName) && item.meta.contains(deviceId)) {
                 data.remove(i);
                 break;
             }
         }
     }
 
-    // ─── Allow NotificationsFragment to clear a resolved bin's cached fullness ─
+    // ─── Called by NotificationsFragment when a notification is resolved ──────
 
+    public void clearLastNotifiedFullness(String deviceId, String binName) {
+        lastNotifiedFullness.remove(deviceId + "|" + binName);
+    }
+
+    // Keep old single-arg version for backward compatibility
     public void clearLastNotifiedFullness(String binName) {
-        lastNotifiedFullness.remove(binName);
+        // Remove all keys that end with this bin name across all devices
+        lastNotifiedFullness.entrySet().removeIf(e -> e.getKey().endsWith("|" + binName));
     }
 
     @Override

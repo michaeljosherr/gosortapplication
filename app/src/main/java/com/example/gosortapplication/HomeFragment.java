@@ -25,12 +25,17 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClickListener {
     private static final String TAG = "HomeFragment";
     private static final String PREF_NAME = "GoSort";
     private static final String BASE_URL = "https://web-production-15f71.up.railway.app/api/";
-    // Note: BinFullnessApi uses GoSort_Sorters.php at the root, not /api/
+
+    // Every time the user picks a different device this counter increments.
+    // Each fetch captures the current version; if it doesn't match when the
+    // response arrives, the result is stale and gets discarded.
+    private final AtomicInteger fetchVersion = new AtomicInteger(0);
 
     // Views
     private TextView greetingText;
@@ -64,7 +69,6 @@ public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClic
     // Handler and API
     private Handler handler;
     private Runnable updateRunnable;
-    private BinFullnessApi binFullnessApi;
     private DeviceAdapter deviceAdapter;
     private String currentDeviceId;
     private String currentDeviceName;
@@ -84,8 +88,6 @@ public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClic
 
         try {
             initializeViews(root);
-
-            binFullnessApi = new BinFullnessApi("");
 
             activityLogs = new ArrayList<>();
             activityLogAdapter = new ActivityLogAdapter(activityLogs);
@@ -120,7 +122,6 @@ public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClic
         circMixed = root.findViewById(R.id.circMixed);
         circHazardous = root.findViewById(R.id.circHazardous);
 
-        // Percent text views (center of circle)
         txtBiodegPercent = root.findViewById(R.id.txtBiodegPercent);
         txtNonBiodegPercent = root.findViewById(R.id.txtNonBiodegPercent);
         txtMixedPercent = root.findViewById(R.id.txtMixedPercent);
@@ -161,8 +162,6 @@ public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClic
             return;
         }
 
-        Log.d(TAG, "Fetching devices for: " + username);
-
         new Thread(() -> {
             try {
                 URL url = new URL(BASE_URL + "user_details_api.php?username=" + username);
@@ -181,30 +180,21 @@ public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClic
                 while ((line = br.readLine()) != null) response.append(line);
                 br.close();
 
-                Log.d(TAG, "user_details response: " + response);
-
                 JSONObject json = new JSONObject(response.toString());
 
                 if (json.optBoolean("success", false)) {
                     JSONArray assignedSorters = json.getJSONObject("data")
                             .getJSONArray("assigned_sorters");
 
-                    Log.d(TAG, "Devices found: " + assignedSorters.length());
-
                     List<JSONObject> deviceList = new ArrayList<>();
-                    for (int i = 0; i < assignedSorters.length(); i++) {
+                    for (int i = 0; i < assignedSorters.length(); i++)
                         deviceList.add(assignedSorters.getJSONObject(i));
-                    }
 
                     if (getActivity() == null) return;
                     getActivity().runOnUiThread(() -> {
                         deviceAdapter.setDevices(deviceList);
-                        if (!deviceList.isEmpty()) {
-                            onDeviceClick(deviceList.get(0));
-                        }
+                        if (!deviceList.isEmpty()) onDeviceClick(deviceList.get(0));
                     });
-                } else {
-                    Log.e(TAG, "API error: " + json.optString("error"));
                 }
 
             } catch (Exception e) {
@@ -216,9 +206,12 @@ public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClic
     @Override
     public void onDeviceClick(JSONObject device) {
         try {
-            currentDeviceId = device.optString("device_identity", "");
+            currentDeviceId   = device.optString("device_identity", "");
             currentDeviceName = device.optString("device_name", "Unknown Device");
-            Log.d(TAG, "Device selected: " + currentDeviceId + " - " + currentDeviceName);
+
+            // Increment version — any in-flight fetch for the previous device
+            // will see a version mismatch and discard its result
+            fetchVersion.incrementAndGet();
 
             for (int i = 0; i < deviceAdapter.getItemCount(); i++) {
                 if (deviceAdapter.getDevices().get(i)
@@ -228,9 +221,20 @@ public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClic
                 }
             }
 
-            if (txtBinStatusDeviceName != null) {
+            if (txtBinStatusDeviceName != null)
                 txtBinStatusDeviceName.setText(currentDeviceName);
-            }
+
+            // Reset previous fullness tracking so activity log fires fresh entries
+            previousBiodegFullness    = -1;
+            previousNonBiodegFullness = -1;
+            previousMixedFullness     = -1;
+            previousHazardousFullness = -1;
+
+            // Clear UI immediately so the old device's data doesn't linger
+            updateBinUI(circBiodeg,    txtBiodegPercent,    txtBiodegStatus,    txtBiodegPriority,    0);
+            updateBinUI(circNonBiodeg, txtNonBiodegPercent, txtNonBiodegStatus, txtNonBiodegPriority, 0);
+            updateBinUI(circMixed,     txtMixedPercent,     txtMixedStatus,     txtMixedPriority,     0);
+            updateBinUI(circHazardous, txtHazardousPercent, txtHazardousStatus, txtHazardousPriority, 0);
 
             updateBinFullness();
 
@@ -245,9 +249,8 @@ public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClic
             @Override
             public void run() {
                 updateUserInfo();
-                if (currentDeviceId != null && !currentDeviceId.isEmpty()) {
+                if (currentDeviceId != null && !currentDeviceId.isEmpty())
                     updateBinFullness();
-                }
                 handler.postDelayed(this, 2000);
             }
         };
@@ -269,62 +272,74 @@ public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClic
         }
 
         final String finalDeviceId = deviceId;
-        binFullnessApi.getBinFullness(finalDeviceId, new BinFullnessApi.BinFullnessCallback() {
-            @Override
-            public void onSuccess(JSONArray binData) {
+        // Capture version at the moment this fetch is launched
+        final int myVersion = fetchVersion.get();
+
+        new Thread(() -> {
+            try {
+                String urlStr = BASE_URL + "bin_fullness.php?device_identity=" + finalDeviceId;
+                URL url = new URL(urlStr);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+
+                int responseCode = conn.getResponseCode();
+                BufferedReader br = new BufferedReader(new InputStreamReader(
+                        responseCode == 200 ? conn.getInputStream() : conn.getErrorStream()));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) sb.append(line);
+                br.close();
+
+                // If the user switched devices while this was in-flight, discard result
+                if (myVersion != fetchVersion.get()) {
+                    Log.d(TAG, "Discarding stale response for device: " + finalDeviceId);
+                    return;
+                }
+
+                JSONObject jsonResponse = new JSONObject(sb.toString());
+                if (!jsonResponse.getString("status").equals("success")) return;
+
+                JSONArray binData = jsonResponse.getJSONArray("data");
+
+                // Keep only the latest reading per bin (API returns newest first)
+                JSONObject latestBinData = new JSONObject();
+                for (int i = 0; i < binData.length(); i++) {
+                    JSONObject bin = binData.getJSONObject(i);
+                    String normalizedKey = bin.getString("bin_name").toLowerCase().trim();
+                    if (!latestBinData.has(normalizedKey))
+                        latestBinData.put(normalizedKey, bin);
+                }
+
                 if (getActivity() == null) return;
                 getActivity().runOnUiThread(() -> {
+                    // Final stale check on UI thread
+                    if (myVersion != fetchVersion.get()) return;
+
                     try {
-                        // FIX: store by normalized bin_name so lookup keys match correctly
-                        JSONObject latestBinData = new JSONObject();
-                        for (int i = 0; i < binData.length(); i++) {
-                            JSONObject bin = binData.getJSONObject(i);
-                            String rawName = bin.getString("bin_name").toLowerCase().trim();
-                            String normalizedKey = normalizeBinName(rawName);
-                            Log.d(TAG, "Bin from API: raw='" + rawName + "' normalized='" + normalizedKey + "'");
-                            if (!latestBinData.has(normalizedKey)) {
-                                latestBinData.put(normalizedKey, bin);
-                            }
-                        }
-
-                        updateBinTypeIfExists(latestBinData, "bio", circBiodeg, txtBiodegPercent, txtBiodegStatus, txtBiodegPriority);
-                        updateBinTypeIfExists(latestBinData, "non-bio", circNonBiodeg, txtNonBiodegPercent, txtNonBiodegStatus, txtNonBiodegPriority);
-                        updateBinTypeIfExists(latestBinData, "mixed", circMixed, txtMixedPercent, txtMixedStatus, txtMixedPriority);
+                        updateBinTypeIfExists(latestBinData, "bio",       circBiodeg,    txtBiodegPercent,    txtBiodegStatus,    txtBiodegPriority);
+                        updateBinTypeIfExists(latestBinData, "non-bio",   circNonBiodeg, txtNonBiodegPercent, txtNonBiodegStatus, txtNonBiodegPriority);
+                        updateBinTypeIfExists(latestBinData, "mixed",     circMixed,     txtMixedPercent,     txtMixedStatus,     txtMixedPriority);
                         updateBinTypeIfExists(latestBinData, "hazardous", circHazardous, txtHazardousPercent, txtHazardousStatus, txtHazardousPriority);
-
                     } catch (Exception e) {
                         Log.e(TAG, "Error updating bin UI: " + e.getMessage());
                     }
                 });
-            }
 
-            @Override
-            public void onError(String message) {
-                Log.e(TAG, "Bin fullness error: " + message);
+            } catch (Exception e) {
+                Log.e(TAG, "updateBinFullness error: " + e.getMessage());
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        updateBinUI(circBiodeg, txtBiodegPercent, txtBiodegStatus, txtBiodegPriority, -1);
+                        if (myVersion != fetchVersion.get()) return;
+                        updateBinUI(circBiodeg,    txtBiodegPercent,    txtBiodegStatus,    txtBiodegPriority,    -1);
                         updateBinUI(circNonBiodeg, txtNonBiodegPercent, txtNonBiodegStatus, txtNonBiodegPriority, -1);
-                        updateBinUI(circMixed, txtMixedPercent, txtMixedStatus, txtMixedPriority, -1);
+                        updateBinUI(circMixed,     txtMixedPercent,     txtMixedStatus,     txtMixedPriority,     -1);
                         updateBinUI(circHazardous, txtHazardousPercent, txtHazardousStatus, txtHazardousPriority, -1);
                     });
                 }
             }
-        });
-    }
-
-    /**
-     * Normalizes bin_name from API ("Non-Bio", "Bio", "Hazardous", "Mixed")
-     * to internal keys ("non-bio", "bio", "hazardous", "mixed")
-     */
-    private String normalizeBinName(String rawName) {
-        switch (rawName) {
-            case "Non-Bio": return "non-bio";
-            case "Bio":     return "bio";
-            case "Hazardous": return "hazardous";
-            case "Mixed":   return "mixed";
-            default:        return rawName.toLowerCase().trim();
-        }
+        }).start();
     }
 
     private void updateBinTypeIfExists(JSONObject latestBinData, String binType,
@@ -348,14 +363,13 @@ public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClic
         if (currentDeviceName == null || currentDeviceName.isEmpty()) return;
         int prev = getPreviousFullness(binType);
 
-        // First reading — log the current state regardless of level
         if (prev == -1) {
             setPreviousFullness(binType, newFullness);
             String currentStatus;
-            if (newFullness <= 25) currentStatus = "is Low (" + newFullness + "%)";
+            if (newFullness <= 25)      currentStatus = "is Low (" + newFullness + "%)";
             else if (newFullness <= 50) currentStatus = "is Medium (" + newFullness + "%)";
             else if (newFullness <= 75) currentStatus = "is Nearly Full (" + newFullness + "%)";
-            else currentStatus = "is Full (" + newFullness + "%)";
+            else                        currentStatus = "is Full (" + newFullness + "%)";
             addActivityLog(currentDeviceName, binType,
                     getBinDisplayName(binType) + " " + currentStatus, R.drawable.ic_analytics);
             return;
@@ -363,45 +377,42 @@ public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClic
 
         setPreviousFullness(binType, newFullness);
 
-        // Log threshold crossings going up
-        if (newFullness >= 50 && prev < 50)
-            addActivityLog(currentDeviceName, binType, getBinDisplayName(binType) + " reached 50%", R.drawable.ic_analytics);
-        if (newFullness >= 90 && prev < 90)
-            addActivityLog(currentDeviceName, binType, getBinDisplayName(binType) + " reached 90%", R.drawable.ic_analytics);
+        if (newFullness >= 50  && prev < 50)
+            addActivityLog(currentDeviceName, binType, getBinDisplayName(binType) + " reached 50%",  R.drawable.ic_analytics);
+        if (newFullness >= 90  && prev < 90)
+            addActivityLog(currentDeviceName, binType, getBinDisplayName(binType) + " reached 90%",  R.drawable.ic_analytics);
         if (newFullness >= 100 && prev < 100)
-            addActivityLog(currentDeviceName, binType, getBinDisplayName(binType) + " is Full!", R.drawable.ic_analytics);
-
-        // Log when bin is emptied
-        if (newFullness <= 10 && prev > 10)
-            addActivityLog(currentDeviceName, binType, getBinDisplayName(binType) + " was emptied", R.drawable.ic_analytics);
+            addActivityLog(currentDeviceName, binType, getBinDisplayName(binType) + " is Full!",     R.drawable.ic_analytics);
+        if (newFullness <= 10  && prev > 10)
+            addActivityLog(currentDeviceName, binType, getBinDisplayName(binType) + " was emptied",  R.drawable.ic_analytics);
     }
 
     private int getPreviousFullness(String binType) {
         switch (binType) {
-            case "bio": return previousBiodegFullness;
-            case "non-bio": return previousNonBiodegFullness;
-            case "mixed": return previousMixedFullness;
+            case "bio":       return previousBiodegFullness;
+            case "non-bio":   return previousNonBiodegFullness;
+            case "mixed":     return previousMixedFullness;
             case "hazardous": return previousHazardousFullness;
-            default: return -1;
+            default:          return -1;
         }
     }
 
     private void setPreviousFullness(String binType, int fullness) {
         switch (binType) {
-            case "bio": previousBiodegFullness = fullness; break;
-            case "non-bio": previousNonBiodegFullness = fullness; break;
-            case "mixed": previousMixedFullness = fullness; break;
+            case "bio":       previousBiodegFullness    = fullness; break;
+            case "non-bio":   previousNonBiodegFullness = fullness; break;
+            case "mixed":     previousMixedFullness     = fullness; break;
             case "hazardous": previousHazardousFullness = fullness; break;
         }
     }
 
     private String getBinDisplayName(String binType) {
         switch (binType) {
-            case "bio": return "Biodegradable Bin";
-            case "non-bio": return "Non-Biodegradable Bin";
-            case "mixed": return "Mixed Waste Bin";
+            case "bio":       return "Biodegradable Bin";
+            case "non-bio":   return "Non-Biodegradable Bin";
+            case "mixed":     return "Mixed Waste Bin";
             case "hazardous": return "Hazardous Bin";
-            default: return "Bin";
+            default:          return "Bin";
         }
     }
 
@@ -450,17 +461,14 @@ public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClic
             status = "Bin is Empty";
             priority = "Lowest Priority";
             priorityColor = android.graphics.Color.parseColor("#4CAF50");
-
         } else if (value <= 50) {
             status = "Bin is Partially Full";
             priority = "Low Priority";
             priorityColor = android.graphics.Color.parseColor("#4CAF50");
-
         } else if (value <= 75) {
             status = "Bin is Nearly Full";
             priority = "Medium Priority";
             priorityColor = android.graphics.Color.parseColor("#FF9800");
-
         } else {
             status = "Bin is Full";
             priority = "High Priority";
@@ -468,10 +476,7 @@ public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClic
         }
 
         progressIndicator.setProgress(value);
-
-        // FIX: update the percentage text in the center of the circle
         if (percentText != null) percentText.setText(value + "%");
-
         statusText.setText(status);
         priorityText.setText(priority);
         statusText.setTextColor(android.graphics.Color.parseColor("#000000"));
@@ -523,8 +528,7 @@ public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClic
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (handler != null && updateRunnable != null) {
+        if (handler != null && updateRunnable != null)
             handler.removeCallbacks(updateRunnable);
-        }
     }
 }

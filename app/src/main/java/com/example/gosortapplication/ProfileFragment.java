@@ -225,8 +225,9 @@ public class ProfileFragment extends Fragment {
                         txtUsername.setText(getString(R.string.full_name_format,
                                 userInfo.getString("userName"),
                                 userInfo.getString("lastName")));
-                        txtRole.setText(userInfo.getString("role"));
+                        txtRole.setText(formatRole(userInfo.getString("role")));
                         tvDeviceCount.setText(String.valueOf(sorters.length()));
+
 
                         if (!sortersLoaded) {
                             currentSorterList.clear();
@@ -254,6 +255,14 @@ public class ProfileFragment extends Fragment {
                 Log.e(TAG, "fetchUserDetails error: " + message);
             }
         });
+    }
+
+    private String formatRole(String role) {
+        if (role == null) return "";
+        switch (role.toLowerCase().trim()) {
+            case "utility": return "Utility Member";
+            default:        return role;
+        }
     }
 
     // ─── Step 2: bin fullness + online status ────────────────────────────────
