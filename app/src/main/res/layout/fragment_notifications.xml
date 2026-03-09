@@ -57,12 +57,14 @@
             android:textSize="18sp"
             android:textStyle="bold" />
 
+        <!-- FIX #5: label corrected from "Mark all resolved" to "Mark all as read"
+             to accurately reflect that it only marks read, not deletes -->
         <TextView
             android:id="@+id/tvMarkAll"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/poppin"
-            android:text="Mark all resolved"
+            android:text="Mark all as read"
             android:textColor="#14AE31"
             android:textSize="13sp" />
 

@@ -1,6 +1,9 @@
 package com.example.gosortapplication;
 
+import java.util.UUID;
+
 public class NotificationItem {
+    public String id;           // unique ID to avoid stale-position bugs
     public String message;
     public String meta;
     public boolean isHighPriority;
@@ -9,6 +12,7 @@ public class NotificationItem {
     public int fullnessLevel;   // 0-100, or -1 for malfunction
 
     public NotificationItem(String message, String meta, boolean isHighPriority) {
+        this.id = UUID.randomUUID().toString();
         this.message = message;
         this.meta = meta;
         this.isHighPriority = isHighPriority;
@@ -19,6 +23,7 @@ public class NotificationItem {
 
     public NotificationItem(String message, String meta, boolean isHighPriority,
                             String binName, int fullnessLevel) {
+        this.id = UUID.randomUUID().toString();
         this.message = message;
         this.meta = meta;
         this.isHighPriority = isHighPriority;

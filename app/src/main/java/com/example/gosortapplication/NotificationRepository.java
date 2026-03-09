@@ -8,17 +8,21 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 public class NotificationRepository {
 
-    private static final String PREFS   = "notifications_prefs";
+    private static final String PREFS     = "notifications_prefs";
     private static final String KEY_ITEMS = "notifications_json";
 
     public interface Listener { void onUnreadCountChanged(int newCount); }
 
     private static NotificationRepository INSTANCE;
-    private final List<NotificationItem> items = new ArrayList<>();
+
+    // FIX #7: use synchronizedList to guard against concurrent access
+    private final List<NotificationItem> items = Collections.synchronizedList(new ArrayList<>());
     private final List<Listener> listeners = new ArrayList<>();
     private SharedPreferences prefs;
 
@@ -29,6 +33,7 @@ public class NotificationRepository {
         return INSTANCE;
     }
 
+    // FIX #1: init() must be called before use (idempotent — safe to call multiple times)
     public void init(Context ctx) {
         if (prefs != null) return;
         prefs = ctx.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
@@ -45,25 +50,81 @@ public class NotificationRepository {
 
     public List<NotificationItem> getAll() { return items; }
 
-    public void markRead(int index) {
-        if (index >= 0 && index < items.size()) {
-            items.get(index).isRead = true;
-            saveToPrefs();
-            notifyListeners();
-        }
-    }
+    // ─── ID-based operations (FIX #4) ────────────────────────────────────────
 
-    public void markAllRead() {
-        for (NotificationItem n : items) n.isRead = true;
+    public void markReadById(String id) {
+        synchronized (items) {
+            for (NotificationItem n : items) {
+                if (n.id.equals(id)) {
+                    n.isRead = true;
+                    break;
+                }
+            }
+        }
         saveToPrefs();
         notifyListeners();
     }
 
+    public void deleteById(String id) {
+        synchronized (items) {
+            for (int i = items.size() - 1; i >= 0; i--) {
+                if (items.get(i).id.equals(id)) {
+                    items.remove(i);
+                    break;
+                }
+            }
+        }
+        saveToPrefs();
+        notifyListeners();
+    }
+
+    // ─── Legacy index-based operations (kept for compatibility) ──────────────
+
+    public void markRead(int index) {
+        synchronized (items) {
+            if (index >= 0 && index < items.size()) {
+                items.get(index).isRead = true;
+            }
+        }
+        saveToPrefs();
+        notifyListeners();
+    }
+
+    public void markAllRead() {
+        synchronized (items) {
+            for (NotificationItem n : items) n.isRead = true;
+        }
+        saveToPrefs();
+        notifyListeners();
+    }
+
+    /** Called by BinPollingService after manually adding an item to the list. */
+    public void notifyAdded() {
+        saveToPrefs();
+        notifyListeners();
+    }
+
+    public void deleteNotification(int position) {
+        synchronized (items) {
+            if (position >= 0 && position < items.size()) {
+                items.remove(position);
+            }
+        }
+        saveToPrefs();
+        notifyListeners();
+    }
+
+    // ─── Unread count ─────────────────────────────────────────────────────────
+
     public int getUnreadCount() {
         int c = 0;
-        for (NotificationItem n : items) if (!n.isRead) c++;
+        synchronized (items) {
+            for (NotificationItem n : items) if (!n.isRead) c++;
+        }
         return c;
     }
+
+    // ─── Listeners ────────────────────────────────────────────────────────────
 
     public void addListener(Listener l) {
         if (l == null) return;
@@ -73,33 +134,33 @@ public class NotificationRepository {
 
     public void removeListener(Listener l) { listeners.remove(l); }
 
+    /** Exposed so MainActivity can trigger a badge refresh after directly mutating the list. */
+    public void notifyListenersPublic() { notifyListeners(); }
+
     private void notifyListeners() {
         int u = getUnreadCount();
         for (Listener l : new ArrayList<>(listeners)) l.onUnreadCountChanged(u);
     }
 
-    public void deleteNotification(int position) {
-        if (position >= 0 && position < items.size()) {
-            items.remove(position);
-            saveToPrefs();
-            notifyListeners();
-        }
-    }
+    // ─── Persistence ──────────────────────────────────────────────────────────
 
     private void saveToPrefs() {
         if (prefs == null) return;
         JSONArray arr = new JSONArray();
-        for (NotificationItem n : items) {
-            JSONObject o = new JSONObject();
-            try {
-                o.put("message",  n.message);
-                o.put("meta",     n.meta);
-                o.put("high",     n.isHighPriority);
-                o.put("read",     n.isRead);
-                o.put("binName",  n.binName);
-                o.put("fullness", n.fullnessLevel);
-            } catch (JSONException ignored) {}
-            arr.put(o);
+        synchronized (items) {
+            for (NotificationItem n : items) {
+                JSONObject o = new JSONObject();
+                try {
+                    o.put("id",       n.id != null ? n.id : UUID.randomUUID().toString());
+                    o.put("message",  n.message);
+                    o.put("meta",     n.meta);
+                    o.put("high",     n.isHighPriority);
+                    o.put("read",     n.isRead);
+                    o.put("binName",  n.binName);
+                    o.put("fullness", n.fullnessLevel);
+                } catch (JSONException ignored) {}
+                arr.put(o);
+            }
         }
         prefs.edit().putString(KEY_ITEMS, arr.toString()).apply();
     }
@@ -121,6 +182,9 @@ public class NotificationRepository {
                         o.optString("binName", ""),
                         o.optInt("fullness",   0)
                 );
+                // Restore persisted ID, or generate one if missing (migration)
+                String savedId = o.optString("id", "");
+                ni.id = savedId.isEmpty() ? UUID.randomUUID().toString() : savedId;
                 ni.isRead = o.optBoolean("read", false);
                 items.add(ni);
             }

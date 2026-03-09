@@ -14,12 +14,13 @@ import com.google.android.material.button.MaterialButton;
 
 public class NotificationDetailFragment extends Fragment {
 
+    // FIX #4: ARG_ID replaces ARG_POSITION — stable across list mutations
+    private static final String ARG_ID            = "arg_id";
     private static final String ARG_MESSAGE       = "arg_message";
     private static final String ARG_META          = "arg_meta";
     private static final String ARG_PRIORITY      = "arg_priority";
     private static final String ARG_BIN_NAME      = "arg_bin_name";
     private static final String ARG_FULLNESS      = "arg_fullness";
-    private static final String ARG_POSITION      = "arg_position";
 
     // Bin colors matching app theme
     private static final int COLOR_BIO       = 0xFFF39C12;
@@ -28,18 +29,19 @@ public class NotificationDetailFragment extends Fragment {
     private static final int COLOR_HAZARDOUS = 0xFFE74C3C;
     private static final int COLOR_DEFAULT   = 0xFF9E9E9E;
 
-    public static NotificationDetailFragment newInstance(String message, String meta,
+    // FIX #4: factory now takes id (String) instead of position (int)
+    public static NotificationDetailFragment newInstance(String id,
+                                                         String message, String meta,
                                                          boolean isHighPriority,
-                                                         String binName, int fullness,
-                                                         int position) {
+                                                         String binName, int fullness) {
         NotificationDetailFragment f = new NotificationDetailFragment();
         Bundle b = new Bundle();
+        b.putString(ARG_ID,       id);
         b.putString(ARG_MESSAGE,  message);
         b.putString(ARG_META,     meta);
         b.putBoolean(ARG_PRIORITY,isHighPriority);
         b.putString(ARG_BIN_NAME, binName);
         b.putInt(ARG_FULLNESS,    fullness);
-        b.putInt(ARG_POSITION,    position);
         f.setArguments(b);
         return f;
     }
@@ -72,12 +74,12 @@ public class NotificationDetailFragment extends Fragment {
         Bundle args = getArguments();
         if (args == null) return v;
 
-        String  message    = args.getString(ARG_MESSAGE, "");
-        String  meta       = args.getString(ARG_META,    "");
+        String  id         = args.getString(ARG_ID,       "");
+        String  message    = args.getString(ARG_MESSAGE,  "");
+        String  meta       = args.getString(ARG_META,     "");
         boolean highPri    = args.getBoolean(ARG_PRIORITY, false);
-        String  binName    = args.getString(ARG_BIN_NAME, "Bin Alert");
-        int     fullness   = args.getInt(ARG_FULLNESS,    0);
-        int     position   = args.getInt(ARG_POSITION,   -1);
+        String  binName    = args.getString(ARG_BIN_NAME,  "Bin Alert");
+        int     fullness   = args.getInt(ARG_FULLNESS,     0);
 
         // Top bar title
         tvDetailTitle.setText(highPri ? "Urgent Alert" : "Notification");
@@ -106,23 +108,23 @@ public class NotificationDetailFragment extends Fragment {
         tvDetailMessage.setText(message);
         tvDetailMeta.setText(extractTimestamp(meta));
 
-        // Mark as Bin Emptied — resolves and removes the notification
-        // Change button label based on notification type
+        // Button label based on notification type
         btnMarkEmptied.setText(fullness == -1 ? "🔧  Mark as Fixed" : "✅  Mark as Bin Emptied");
 
+        // FIX #4: resolve by stable ID — immune to list mutations while detail is open
         btnMarkEmptied.setOnClickListener(x -> {
-            if (position >= 0)
-                NotificationRepository.get().deleteNotification(position);
+            if (!id.isEmpty())
+                NotificationRepository.get().deleteById(id);
             if (getParentFragmentManager().getBackStackEntryCount() > 0)
                 getParentFragmentManager().popBackStack();
             else
                 requireActivity().onBackPressed();
         });
 
-        // Dismiss — just marks as read and goes back
+        // Dismiss — marks as read by stable ID
         btnDismiss.setOnClickListener(x -> {
-            if (position >= 0)
-                NotificationRepository.get().markRead(position);
+            if (!id.isEmpty())
+                NotificationRepository.get().markReadById(id);
             if (getParentFragmentManager().getBackStackEntryCount() > 0)
                 getParentFragmentManager().popBackStack();
             else
