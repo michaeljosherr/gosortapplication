@@ -69,21 +69,49 @@ public class AnalyticsModel {
 
     // ─── Fetch ───────────────────────────────────────────────────────────────
 
+    private Call activeCall = null; // track in-flight request so we can cancel it
+
     public void fetch(String deviceId) {
-        currentDeviceId = deviceId != null ? deviceId : "";
-        if (currentDeviceId.isEmpty()) { Log.e(TAG, "Empty deviceId"); return; }
+        String newId = deviceId != null ? deviceId : "";
+        if (newId.isEmpty()) { Log.e(TAG, "Empty deviceId"); return; }
+
+        // Cancel any in-flight request for a previous device
+        if (activeCall != null) {
+            activeCall.cancel();
+            activeCall = null;
+        }
+
+        currentDeviceId = newId;
+
+        // Immediately clear stale data so the UI doesn't show the previous device's numbers
+        todayCounts = new int[]{0, 0, 0, 0};
+        todayTotal  = 0;
+        handler.post(() -> {
+            for (DailyListener l : dailyListeners)
+                l.onDailyData(new int[]{0,0,0,0}, new int[]{0,0,0,0}, 0);
+        });
+
         fetchTodayStats();
     }
 
     private void fetchTodayStats() {
-        String url = BASE_URL + "get_daily_sorting.php";
-        Log.d(TAG, "Fetching today: " + url);
+        // Snapshot the device we're fetching for — guards against race conditions
+        final String fetchingForDevice = currentDeviceId;
 
-        client.newCall(new Request.Builder().url(url).build()).enqueue(new Callback() {
+        String url = BASE_URL + "get_daily_sorting.php";
+        Log.d(TAG, "Fetching today for device: " + fetchingForDevice);
+
+        activeCall = client.newCall(new Request.Builder().url(url).build());
+        activeCall.enqueue(new Callback() {
             @Override public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                Log.e(TAG, "Today fetch failed", e);
+                if (!call.isCanceled()) Log.e(TAG, "Today fetch failed", e);
             }
             @Override public void onResponse(@NonNull Call call, @NonNull Response response) {
+                // If the user already switched to another device, discard this result
+                if (!fetchingForDevice.equals(currentDeviceId)) {
+                    Log.d(TAG, "Discarding stale response for: " + fetchingForDevice);
+                    return;
+                }
                 try {
                     ResponseBody body = response.body();
                     if (body == null) return;
@@ -98,7 +126,8 @@ public class AnalyticsModel {
 
                     for (int i = 0; i < data.length(); i++) {
                         JSONObject row = data.getJSONObject(i);
-                        if (!row.optString("device_identity", "").equals(currentDeviceId)) continue;
+                        // Filter by the device we requested
+                        if (!row.optString("device_identity", "").equals(fetchingForDevice)) continue;
                         int cnt = row.optInt("count", 0);
                         switch (row.optString("trash_type", "").toLowerCase()) {
                             case "bio":       counts[0] += cnt; break;
@@ -111,7 +140,6 @@ public class AnalyticsModel {
                     todayCounts = counts;
                     todayTotal  = counts[0] + counts[1] + counts[2] + counts[3];
 
-                    // Compute percentages for donut
                     int[] pct = new int[4];
                     if (todayTotal > 0) {
                         for (int i = 0; i < 4; i++)

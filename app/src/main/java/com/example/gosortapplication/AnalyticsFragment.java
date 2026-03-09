@@ -151,6 +151,7 @@ public class AnalyticsFragment extends Fragment implements DeviceAdapter.OnDevic
                 Log.e(TAG, "fetchAssignedDevices error: " + e.getMessage());
             }
         }).start();
+
     }
 
     @Override

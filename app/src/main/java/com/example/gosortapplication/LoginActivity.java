@@ -45,13 +45,13 @@ public class LoginActivity extends AppCompatActivity {
 
         apiClient = new GoSortApiClient();
 
-        EditText emailInput = findViewById(R.id.emailInput);
+        EditText emailInput    = findViewById(R.id.emailInput);
         EditText passwordInput = findViewById(R.id.passwordInput);
-        Button loginButton = findViewById(R.id.loginButton);
-        progressBar = findViewById(R.id.progressBar);
+        Button loginButton     = findViewById(R.id.loginButton);
+        progressBar            = findViewById(R.id.progressBar);
 
         loginButton.setOnClickListener(v -> {
-            String email = emailInput.getText().toString().trim();
+            String email    = emailInput.getText().toString().trim();
             String password = passwordInput.getText().toString();
 
             if (email.isEmpty() || password.isEmpty()) {
@@ -70,31 +70,35 @@ public class LoginActivity extends AppCompatActivity {
                         loginButton.setEnabled(true);
 
                         try {
-                            // DEBUG: print full API response so we can see the structure
                             Log.d(TAG, "Full userData: " + userData.toString(2));
+
+                            // GoSortApiClient already unwraps "data" so userData IS the inner object
+                            Log.d(TAG, "username: " + userData.optString("username"));
+                            Log.d(TAG, "email: "    + userData.optString("email"));
 
                             JSONObject sorter = userData.optJSONObject("sorter");
 
                             android.content.SharedPreferences.Editor editor =
                                     getSharedPreferences(PREF_NAME, MODE_PRIVATE).edit();
 
-                            editor.putString(KEY_USER_ID, userData.optString("userId"))
-                                    .putString(KEY_USERNAME, userData.optString("username"))
-                                    .putString(KEY_LASTNAME, userData.optString("lastName"))
-                                    .putString(KEY_ROLE, userData.optString("role"))
+                            editor.putString(KEY_USER_ID,        userData.optString("userId"))
+                                    .putString(KEY_USERNAME,       userData.optString("username"))
+                                    .putString(KEY_LASTNAME,       userData.optString("lastName"))
+                                    .putString(KEY_ROLE,           userData.optString("role"))
                                     .putString(KEY_ASSIGNED_FLOOR, userData.optString("assignedFloor"))
-                                    .putString(KEY_TOKEN, userData.optString("token"))
-                                    .putBoolean(KEY_IS_LOGGED_IN, true);
+                                    .putString(KEY_TOKEN,          userData.optString("token"))
+                                    .putString("email",            userData.optString("email"))
+                                    .putBoolean(KEY_IS_LOGGED_IN,  true);
 
                             if (sorter != null) {
                                 Log.d(TAG, "Sorter data: " + sorter.toString(2));
                                 editor.putString(KEY_SORTER_DEVICE_NAME, sorter.optString("device_name"))
-                                        .putString(KEY_SORTER_DEVICE_ID, sorter.optString("device_identity"))
-                                        .putString(KEY_SORTER_LOCATION, sorter.optString("location"))
-                                        .putString(KEY_SORTER_STATUS, sorter.optString("status"))
+                                        .putString(KEY_SORTER_DEVICE_ID,   sorter.optString("device_identity"))
+                                        .putString(KEY_SORTER_LOCATION,    sorter.optString("location"))
+                                        .putString(KEY_SORTER_STATUS,      sorter.optString("status"))
                                         .putString(KEY_SORTER_MAINTENANCE, String.valueOf(sorter.optBoolean("maintenance_mode")))
-                                        .putString(KEY_SORTER_FLOOR, sorter.optString("assigned_floor"))
-                                        .putString("sorter", sorter.toString()); // Save full sorter JSON
+                                        .putString(KEY_SORTER_FLOOR,       sorter.optString("assigned_floor"))
+                                        .putString("sorter",               sorter.toString());
                             } else {
                                 Log.w(TAG, "No sorter object found in userData!");
                             }

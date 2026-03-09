@@ -24,7 +24,7 @@ public class DeviceViewHolder extends RecyclerView.ViewHolder {
         if (selected) {
             itemView.setBackgroundColor(android.graphics.Color.parseColor("#E8F5E8")); // Light green background
         } else {
-            itemView.setBackgroundColor(android.graphics.Color.parseColor("#F8FFEF")); // Default background
+            itemView.setBackgroundColor(android.graphics.Color.parseColor("#FFFFFF")); // Default background
         }
     }
 }
