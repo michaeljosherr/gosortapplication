@@ -1,266 +1,160 @@
 package com.GoSort.Application;
 
 import android.content.Context;
-import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Arrays;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Locale;
+import java.util.List;
+
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import android.os.Handler;
-import android.os.Looper;
-import androidx.annotation.NonNull;
 
 public class AnalyticsModel {
     private static final String TAG = "AnalyticsModel";
-    private static final String PREF_NAME = "GoSort";
+    private static final String BASE_URL = "https://web-production-15f71.up.railway.app/api/";
+
     private static AnalyticsModel instance;
-    private final List<Listener> listeners = new ArrayList<>();
-    private final List<ActivityListener> activityListeners = new ArrayList<>();
-    private final int[] values = new int[]{0, 0, 0, 0}; // Reduced to 4 categories
-    private final Handler handler = new Handler(Looper.getMainLooper());
+
+    private final List<DailyListener> dailyListeners = new ArrayList<>();
+
+    // Cached today data: bio, nonbio, mixed, hazardous
+    private int[] todayCounts = new int[]{0, 0, 0, 0};
+    private int   todayTotal  = 0;
+
+    private String currentDeviceId = "";
+
+    private final Handler     handler = new Handler(Looper.getMainLooper());
     private final OkHttpClient client = new OkHttpClient();
-    private final Context context;
+    private final Context     context;
 
     private AnalyticsModel(Context context) {
         this.context = context.getApplicationContext();
-        startFetchingStatistics();
     }
 
     public static synchronized AnalyticsModel init(Context context) {
-        if (instance == null) {
-            instance = new AnalyticsModel(context);
-        }
+        if (instance == null) instance = new AnalyticsModel(context);
         return instance;
     }
 
     public static synchronized AnalyticsModel get() {
-        if (instance == null) {
-            throw new IllegalStateException("AnalyticsModel must be initialized with context first");
-        }
+        if (instance == null) throw new IllegalStateException("AnalyticsModel not initialized");
         return instance;
     }
 
-    public interface Listener {
-        void onDataChanged(int[] values);
+    // ─── Interface ───────────────────────────────────────────────────────────
+
+    public interface DailyListener {
+        /** counts[0]=bio, [1]=nonbio, [2]=mixed, [3]=hazardous */
+        void onDailyData(int[] counts, int[] percentages, int total);
     }
 
-    // New listener interface for weekly activity (7 days)
-    public interface ActivityListener {
-        void onWeeklyActivity(int[] counts);
-    }
+    public void addDailyListener(DailyListener l)    { if (!dailyListeners.contains(l)) dailyListeners.add(l); }
+    public void removeDailyListener(DailyListener l) { dailyListeners.remove(l); }
 
-    public void addListener(Listener l) {
-        if (!listeners.contains(l)) {
-            listeners.add(l);
-        }
-    }
+    public int[] getTodayCounts()      { return todayCounts.clone(); }
+    public int   getTodayTotal()       { return todayTotal; }
 
-    public void removeListener(Listener l) {
-        listeners.remove(l);
-    }
+    // ─── Fetch ───────────────────────────────────────────────────────────────
 
-    public void addActivityListener(ActivityListener l) {
-        if (!activityListeners.contains(l)) {
-            activityListeners.add(l);
-        }
-    }
+    private Call activeCall = null; // track in-flight request so we can cancel it
 
-    public void removeActivityListener(ActivityListener l) {
-        activityListeners.remove(l);
-    }
+    public void fetch(String deviceId) {
+        String newId = deviceId != null ? deviceId : "";
+        if (newId.isEmpty()) { Log.e(TAG, "Empty deviceId"); return; }
 
-    public int[] getValues() {
-        return values.clone();
-    }
-
-    private String getBaseUrl() {
-        // Hosted API base URL (no longer depends on device_ip)
-        String baseUrl = "https://gosortweb-production.up.railway.app/api/";
-        Log.d(TAG, "Using hosted base URL: " + baseUrl);
-        return baseUrl;
-    }
-
-    private String getDeviceIdentity() {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        String deviceId = prefs.getString("sorter_device_id", "");
-        Log.d(TAG, "Retrieved sorter_device_id from SharedPreferences: " + deviceId);
-        return deviceId;
-    }
-
-    private void startFetchingStatistics() {
-        // Initial fetch both types
-        fetchStatistics();
-        fetchWeeklyActivity();
-
-        // Schedule periodic updates
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                fetchStatistics();
-                fetchWeeklyActivity();
-                handler.postDelayed(this, 30000); // Fetch every 30 seconds
-            }
-        }, 30000);
-    }
-
-    private void fetchStatistics() {
-        String deviceId = getDeviceIdentity();
-        if (deviceId.isEmpty()) {
-            Log.e(TAG, "Device identity not found in SharedPreferences");
-            return;
+        // Cancel any in-flight request for a previous device
+        if (activeCall != null) {
+            activeCall.cancel();
+            activeCall = null;
         }
 
-        String baseUrl = getBaseUrl();
-        String url = baseUrl + "statistics_api.php?type=trash_types&device_identity=" + deviceId;
-        Log.d(TAG, "Fetching statistics from: " + url);
+        currentDeviceId = newId;
 
-        Request request = new Request.Builder()
-                .url(url)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                Log.e(TAG, "Failed to fetch statistics", e);
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-                try {
-                    ResponseBody body = response.body();
-                    if (body == null) {
-                        Log.e(TAG, "Empty response body");
-                        return;
-                    }
-
-                    String responseBody = body.string();
-                    Log.d(TAG, "Received response: " + responseBody);
-
-                    JSONObject json = new JSONObject(responseBody);
-                    if (json.getBoolean("success")) {
-                        JSONObject data = json.getJSONObject("data");
-                        Log.d(TAG, "Parsed statistics data: " + data);
-
-                        // Reset values
-                        Arrays.fill(values, 0);
-
-                        // Update values from API response - only 4 trash categories
-                        if (data.has("biodegradable")) values[0] = data.optInt("biodegradable", 0);
-                        if (data.has("non-biodegradable")) values[1] = data.optInt("non-biodegradable", 0);
-                        if (data.has("mixed")) values[2] = data.optInt("mixed", 0);
-                        if (data.has("hazardous")) values[3] = data.optInt("hazardous", 0);
-
-                        // Convert to percentages
-                        int total = 0;
-                        for (int value : values) total += value;
-
-                        if (total > 0) {
-                            for (int i = 0; i < values.length; i++) {
-                                values[i] = (values[i] * 100) / total;
-                            }
-                        }
-
-                        Log.d(TAG, "Calculated percentages: " +
-                              "Bio=" + values[0] + "%, " +
-                              "NonBio=" + values[1] + "%, " +
-                              "Mixed=" + values[2] + "%, " +
-                              "Hazardous=" + values[3] + "%");
-
-                        // Notify listeners on UI thread
-                        handler.post(() -> {
-                            for (Listener l : listeners) {
-                                l.onDataChanged(values.clone());
-                            }
-                        });
-                    } else {
-                        Log.e(TAG, "API returned error: " + json.optString("error", "Unknown error"));
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "Error processing response", e);
-                }
-            }
+        // Immediately clear stale data so the UI doesn't show the previous device's numbers
+        todayCounts = new int[]{0, 0, 0, 0};
+        todayTotal  = 0;
+        handler.post(() -> {
+            for (DailyListener l : dailyListeners)
+                l.onDailyData(new int[]{0,0,0,0}, new int[]{0,0,0,0}, 0);
         });
+
+        fetchTodayStats();
     }
 
-    // Fetch weekly/daily activity (last 7 days) and notify activityListeners
-    private void fetchWeeklyActivity() {
-        String deviceId = getDeviceIdentity();
-        if (deviceId.isEmpty()) {
-            Log.e(TAG, "Device identity not found in SharedPreferences for weekly activity");
-            return;
-        }
+    private void fetchTodayStats() {
+        // Snapshot the device we're fetching for — guards against race conditions
+        final String fetchingForDevice = currentDeviceId;
 
-        String baseUrl = getBaseUrl();
-        String url = baseUrl + "statistics_api.php?type=daily_sorting&device_identity=" + deviceId;
-        Log.d(TAG, "Fetching weekly activity from: " + url);
+        String url = BASE_URL + "get_daily_sorting.php";
+        Log.d(TAG, "Fetching today for device: " + fetchingForDevice);
 
-        Request request = new Request.Builder()
-                .url(url)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                Log.e(TAG, "Failed to fetch weekly activity", e);
+        activeCall = client.newCall(new Request.Builder().url(url).build());
+        activeCall.enqueue(new Callback() {
+            @Override public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                if (!call.isCanceled()) Log.e(TAG, "Today fetch failed", e);
             }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
+            @Override public void onResponse(@NonNull Call call, @NonNull Response response) {
+                // If the user already switched to another device, discard this result
+                if (!fetchingForDevice.equals(currentDeviceId)) {
+                    Log.d(TAG, "Discarding stale response for: " + fetchingForDevice);
+                    return;
+                }
                 try {
                     ResponseBody body = response.body();
-                    if (body == null) {
-                        Log.e(TAG, "Empty response body for weekly activity");
-                        return;
-                    }
+                    if (body == null) return;
+                    String raw = body.string();
+                    Log.d(TAG, "Today response: " + raw);
 
-                    String responseBody = body.string();
-                    Log.d(TAG, "Received weekly response: " + responseBody);
+                    JSONObject json = new JSONObject(raw);
+                    if (!json.optBoolean("success", false)) return;
 
-                    JSONObject json = new JSONObject(responseBody);
-                    if (json.getBoolean("success")) {
-                        JSONObject data = json.optJSONObject("data");
-                        // Prepare counts for 7 days: day0 = 6 days ago, ..., day6 = today
-                        int[] counts = new int[7];
-                        SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-                        Calendar cal = Calendar.getInstance();
+                    JSONArray data  = json.getJSONArray("data");
+                    int[] counts    = new int[4];
 
-                        for (int i = 0; i < 7; i++) {
-                            // compute date = today - (6 - i)
-                            Calendar c = (Calendar) cal.clone();
-                            c.add(Calendar.DAY_OF_YEAR, -(6 - i));
-                            String key = fmt.format(c.getTime());
-                            if (data != null && data.has(key)) {
-                                counts[i] = data.optInt(key, 0);
-                            } else {
-                                counts[i] = 0;
-                            }
+                    for (int i = 0; i < data.length(); i++) {
+                        JSONObject row = data.getJSONObject(i);
+                        // Filter by the device we requested
+                        if (!row.optString("device_identity", "").equals(fetchingForDevice)) continue;
+                        int cnt = row.optInt("count", 0);
+                        switch (row.optString("trash_type", "").toLowerCase()) {
+                            case "bio":       counts[0] += cnt; break;
+                            case "nbio":      counts[1] += cnt; break;
+                            case "mixed":     counts[2] += cnt; break;
+                            case "hazardous": counts[3] += cnt; break;
                         }
-
-                        Log.d(TAG, "Weekly counts: " + Arrays.toString(counts));
-
-                        handler.post(() -> {
-                            for (ActivityListener al : activityListeners) {
-                                al.onWeeklyActivity(counts.clone());
-                            }
-                        });
-
-                    } else {
-                        Log.e(TAG, "Weekly API returned error: " + json.optString("error", "Unknown error"));
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, "Error processing weekly activity response", e);
-                }
+
+                    todayCounts = counts;
+                    todayTotal  = counts[0] + counts[1] + counts[2] + counts[3];
+
+                    int[] pct = new int[4];
+                    if (todayTotal > 0) {
+                        for (int i = 0; i < 4; i++)
+                            pct[i] = Math.round((counts[i] * 100f) / todayTotal);
+                    }
+
+                    Log.d(TAG, "Today counts:" + Arrays.toString(todayCounts) + " total:" + todayTotal);
+
+                    final int[] finalPct = pct;
+                    handler.post(() -> {
+                        for (DailyListener l : dailyListeners)
+                            l.onDailyData(todayCounts.clone(), finalPct, todayTotal);
+                    });
+
+                } catch (Exception e) { Log.e(TAG, "Today parse error", e); }
             }
         });
     }

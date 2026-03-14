@@ -1,7 +1,7 @@
 package com.GoSort.Application;
 
-import android.content.Context;
 import android.animation.ValueAnimator;
+import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
@@ -15,14 +15,19 @@ import java.util.List;
 
 public class ConcentricDonutView extends View {
 
-    private final Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint arcPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint slicePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint holePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint gapPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
     private final List<Integer> colors = new ArrayList<>();
-    // target values (what setData was asked to show)
     private final List<Float> targetValues = new ArrayList<>();
-    // currently displayed (animated) values
     private final List<Float> displayedValues = new ArrayList<>();
     private ValueAnimator animator;
+
+    // Gap between slices in degrees
+    private static final float GAP_DEGREES = 2.5f;
+    // Hole size as fraction of radius (0.5 = 50% hole)
+    private static final float HOLE_RADIUS_FRACTION = 0.55f;
 
     public ConcentricDonutView(Context context) {
         super(context);
@@ -40,74 +45,51 @@ public class ConcentricDonutView extends View {
     }
 
     private void init() {
-        backgroundPaint.setStyle(Paint.Style.STROKE);
-        backgroundPaint.setColor(0xFFECECEC); // light gray background ring
-        backgroundPaint.setStrokeCap(Paint.Cap.ROUND);
+        slicePaint.setStyle(Paint.Style.FILL);
 
-        arcPaint.setStyle(Paint.Style.STROKE);
-        arcPaint.setStrokeCap(Paint.Cap.ROUND);
+        holePaint.setStyle(Paint.Style.FILL);
+        holePaint.setColor(0xFFFFFFFF); // white hole — matches card background
+
+        gapPaint.setStyle(Paint.Style.FILL);
+        gapPaint.setColor(0xFFFFFFFF); // white gap between slices
     }
 
     public void setData(int[] vals, int[] cols) {
         colors.clear();
         targetValues.clear();
         if (vals == null || cols == null) return;
+
         int n = Math.min(vals.length, cols.length);
+        float total = 0;
+        for (int i = 0; i < n; i++) total += Math.max(vals[i], 0);
+
         for (int i = 0; i < n; i++) {
-            targetValues.add((float) vals[i]);
+            // Store as percentage of total (0-100)
+            float pct = total > 0 ? (Math.max(vals[i], 0) / total) * 100f : 0f;
+            targetValues.add(pct);
             colors.add(cols[i]);
         }
 
-        // Ensure displayedValues has same size
-        while (displayedValues.size() < targetValues.size()) {
-            displayedValues.add(0f);
-        }
-        if (displayedValues.size() > targetValues.size()) {
-            // trim extras
-            for (int i = displayedValues.size() - 1; i >= targetValues.size(); i--) {
-                displayedValues.remove(i);
-            }
-        }
+        // Sync displayedValues size
+        while (displayedValues.size() < targetValues.size()) displayedValues.add(0f);
+        while (displayedValues.size() > targetValues.size()) displayedValues.remove(displayedValues.size() - 1);
 
-        // If there's an ongoing animation, cancel it
-        if (animator != null && animator.isRunning()) {
-            animator.cancel();
-        }
+        if (animator != null && animator.isRunning()) animator.cancel();
 
-        // If displayedValues are equal to targetValues, just redraw
-        boolean equal = true;
-        for (int i = 0; i < targetValues.size(); i++) {
-            if (i >= displayedValues.size() || !displayedValues.get(i).equals(targetValues.get(i))) {
-                equal = false; break;
-            }
-        }
-        if (equal) {
-            invalidate();
-            return;
-        }
-
-        // Animate from displayedValues -> targetValues
         final List<Float> start = new ArrayList<>(displayedValues);
         final List<Float> end = new ArrayList<>(targetValues);
+
         animator = ValueAnimator.ofFloat(0f, 1f);
-        animator.setDuration(600);
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float frac = (float) animation.getAnimatedValue();
-                // interpolate each value
-                for (int i = 0; i < end.size(); i++) {
-                    float s = i < start.size() ? start.get(i) : 0f;
-                    float t = end.get(i);
-                    float v = s + (t - s) * frac;
-                    if (i < displayedValues.size()) {
-                        displayedValues.set(i, v);
-                    } else {
-                        displayedValues.add(v);
-                    }
-                }
-                invalidate();
+        animator.setDuration(700);
+        animator.addUpdateListener(animation -> {
+            float frac = (float) animation.getAnimatedValue();
+            for (int i = 0; i < end.size(); i++) {
+                float s = i < start.size() ? start.get(i) : 0f;
+                float interpolated = s + (end.get(i) - s) * frac;
+                if (i < displayedValues.size()) displayedValues.set(i, interpolated);
+                else displayedValues.add(interpolated);
             }
+            invalidate();
         });
         animator.start();
     }
@@ -115,48 +97,45 @@ public class ConcentricDonutView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        if (displayedValues.isEmpty()) return;
 
-    if (displayedValues.isEmpty()) return;
-
-    // If all values are zero or negative, nothing to draw
-    boolean anyPositive = false;
-    for (Float v : displayedValues) {
-        if (v != null && v > 0f) { anyPositive = true; break; }
-    }
-    if (!anyPositive) return;
+        float total = 0;
+        for (Float v : displayedValues) if (v != null && v > 0) total += v;
+        if (total <= 0) return;
 
         int w = getWidth();
         int h = getHeight();
         int cx = w / 2;
         int cy = h / 2;
 
-        // base radius is half of min dimension * 0.9
-        float baseRadius = Math.min(w, h) * 0.45f;
-        int count = displayedValues.size();
-        float ringWidth = baseRadius / (count * 2f + 1f); // spacing
+        float radius = Math.min(w, h) * 0.48f;
+        float holeRadius = radius * HOLE_RADIUS_FRACTION;
 
-        // draw each ring from outer to inner
-        for (int i = 0; i < count; i++) {
-            float radius = baseRadius - i * (ringWidth * 2f);
-            float stroke = ringWidth * 1.8f;
+        RectF oval = new RectF(cx - radius, cy - radius, cx + radius, cy + radius);
 
-            RectF oval = new RectF(cx - radius, cy - radius, cx + radius, cy + radius);
+        // Count non-zero slices for gap calculation
+        int nonZeroCount = 0;
+        for (Float v : displayedValues) if (v != null && v > 0) nonZeroCount++;
 
-            // background track
-            backgroundPaint.setStrokeWidth(stroke);
-            canvas.drawArc(oval, 0, 360, false, backgroundPaint);
+        float totalGaps = GAP_DEGREES * nonZeroCount;
+        float availableDegrees = 360f - totalGaps;
 
-            // colored arc
-            arcPaint.setStrokeWidth(stroke);
-            int color = (i < colors.size()) ? colors.get(i) : 0xFF4A90E2;
-            arcPaint.setColor(color);
-            // Treat each value as a percentage (0..100). Cap at 100 so 100% == full circle.
-            float raw = displayedValues.get(i);
-            if (raw < 0f) raw = 0f;
-            float pct = Math.min(raw, 100f) / 100f;
-            float sweep = pct * 360f;
-            // start at -90 to start at top
-            canvas.drawArc(oval, -90f, sweep, false, arcPaint);
+        float startAngle = -90f; // start at top
+
+        for (int i = 0; i < displayedValues.size(); i++) {
+            float val = displayedValues.get(i);
+            if (val <= 0) continue;
+
+            float sweep = (val / total) * availableDegrees;
+            int color = i < colors.size() ? colors.get(i) : 0xFF4A90E2;
+
+            slicePaint.setColor(color);
+            canvas.drawArc(oval, startAngle, sweep, true, slicePaint);
+
+            startAngle += sweep + GAP_DEGREES;
         }
+
+        // Draw white hole in center to make it a donut
+        canvas.drawCircle(cx, cy, holeRadius, holePaint);
     }
 }

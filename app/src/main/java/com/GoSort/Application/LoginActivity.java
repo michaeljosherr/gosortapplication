@@ -23,7 +23,6 @@ public class LoginActivity extends AppCompatActivity {
     private static final String KEY_ROLE = "role";
     private static final String KEY_ASSIGNED_FLOOR = "assignedFloor";
     private static final String KEY_TOKEN = "token";
-    // New sorter-related keys
     private static final String KEY_SORTER_DEVICE_NAME = "sorter_device_name";
     private static final String KEY_SORTER_DEVICE_ID = "sorter_device_id";
     private static final String KEY_SORTER_LOCATION = "sorter_location";
@@ -46,23 +45,20 @@ public class LoginActivity extends AppCompatActivity {
 
         apiClient = new GoSortApiClient();
 
-        EditText emailInput = findViewById(R.id.emailInput);
+        EditText emailInput    = findViewById(R.id.emailInput);
         EditText passwordInput = findViewById(R.id.passwordInput);
-        Button loginButton = findViewById(R.id.loginButton);
-        progressBar = findViewById(R.id.progressBar);
+        Button loginButton     = findViewById(R.id.loginButton);
+        progressBar            = findViewById(R.id.progressBar);
 
         loginButton.setOnClickListener(v -> {
-            String email = emailInput.getText().toString().trim();
+            String email    = emailInput.getText().toString().trim();
             String password = passwordInput.getText().toString();
 
             if (email.isEmpty() || password.isEmpty()) {
-                Log.w(TAG, "Login attempt with empty credentials");
                 Toast.makeText(this, "Please enter email and password", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            Log.i(TAG, "Attempting login for email: " + email);
-            // Show loading state
             progressBar.setVisibility(View.VISIBLE);
             loginButton.setEnabled(false);
 
@@ -74,44 +70,57 @@ public class LoginActivity extends AppCompatActivity {
                         loginButton.setEnabled(true);
 
                         try {
-                            Log.d(TAG, "Login successful. User data: " + userData.toString());
-                            // The userData already contains the data object contents
-                            JSONObject sorter = userData.optJSONObject("sorter");
+                            Log.d(TAG, "Full userData: " + userData.toString(2));
+                            Log.d(TAG, "username: " + userData.optString("username"));
+                            Log.d(TAG, "email: "    + userData.optString("email"));
 
-                            // Start building shared preferences editor
-                            android.content.SharedPreferences.Editor editor = getSharedPreferences(PREF_NAME, MODE_PRIVATE).edit();
-
-                            // Save basic user data
-                            editor.putString(KEY_USER_ID, userData.getString("userId"))
-                                  .putString(KEY_USERNAME, userData.getString("username"))
-                                  .putString(KEY_LASTNAME, userData.getString("lastName"))
-                                  .putString(KEY_ROLE, userData.getString("role"))
-                                  .putString(KEY_ASSIGNED_FLOOR, userData.getString("assignedFloor"))
-                                  .putString(KEY_TOKEN, userData.getString("token"))
-                                  .putBoolean(KEY_IS_LOGGED_IN, true);
-
-                            // Save sorter data if available
-                            if (sorter != null) {
-                                editor.putString(KEY_SORTER_DEVICE_NAME, sorter.getString("device_name"))
-                                      .putString(KEY_SORTER_DEVICE_ID, sorter.getString("device_identity"))
-                                      .putString(KEY_SORTER_LOCATION, sorter.getString("location"))
-                                      .putString(KEY_SORTER_STATUS, sorter.getString("status"))
-                                      .putString(KEY_SORTER_MAINTENANCE, String.valueOf(sorter.getBoolean("maintenance_mode")))
-                                      .putString(KEY_SORTER_FLOOR, sorter.getString("assigned_floor"));
+                            // Role restriction — mobile app is for Utility Members only
+                            String role = userData.optString("role", "").toLowerCase().trim();
+                            if (!role.equals("utility")) {
+                                Toast.makeText(LoginActivity.this,
+                                        "Access denied. This app is for Utility Members only.",
+                                        Toast.LENGTH_LONG).show();
+                                Log.w(TAG, "Login blocked for role: " + role);
+                                return;
                             }
 
-                            // Apply all changes
+                            JSONObject sorter = userData.optJSONObject("sorter");
+
+                            android.content.SharedPreferences.Editor editor =
+                                    getSharedPreferences(PREF_NAME, MODE_PRIVATE).edit();
+
+                            editor.putString(KEY_USER_ID,        userData.optString("userId"))
+                                    .putString(KEY_USERNAME,       userData.optString("username"))
+                                    .putString(KEY_LASTNAME,       userData.optString("lastName"))
+                                    .putString(KEY_ROLE,           userData.optString("role"))
+                                    .putString(KEY_ASSIGNED_FLOOR, userData.optString("assignedFloor"))
+                                    .putString(KEY_TOKEN,          userData.optString("token"))
+                                    .putString("email",            userData.optString("email"))
+                                    .putBoolean(KEY_IS_LOGGED_IN,  true);
+
+                            if (sorter != null) {
+                                Log.d(TAG, "Sorter data: " + sorter.toString(2));
+                                editor.putString(KEY_SORTER_DEVICE_NAME, sorter.optString("device_name"))
+                                        .putString(KEY_SORTER_DEVICE_ID,   sorter.optString("device_identity"))
+                                        .putString(KEY_SORTER_LOCATION,    sorter.optString("location"))
+                                        .putString(KEY_SORTER_STATUS,      sorter.optString("status"))
+                                        .putString(KEY_SORTER_MAINTENANCE, String.valueOf(sorter.optBoolean("maintenance_mode")))
+                                        .putString(KEY_SORTER_FLOOR,       sorter.optString("assigned_floor"))
+                                        .putString("sorter",               sorter.toString());
+                            } else {
+                                Log.w(TAG, "No sorter object found in userData!");
+                            }
+
                             editor.apply();
 
-                            Log.i(TAG, "User preferences saved, navigating to MainActivity");
-                            // Navigate to MainActivity
-                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                            startActivity(intent);
+                            Log.i(TAG, "Preferences saved, navigating to MainActivity");
+                            startActivity(new Intent(LoginActivity.this, MainActivity.class));
                             finish();
+
                         } catch (Exception e) {
                             Log.e(TAG, "Error processing login response: " + e.getMessage(), e);
                             Toast.makeText(LoginActivity.this,
-                                "Error processing login response", Toast.LENGTH_SHORT).show();
+                                    "Error processing login response", Toast.LENGTH_SHORT).show();
                         }
                     });
                 }

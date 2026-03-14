@@ -7,78 +7,77 @@
     android:background="@color/white">
 
     <!-- Header with eco illustration -->
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:src="@drawable/top_illustration"
-        android:scaleType="centerCrop"
-        android:contentDescription="Eco illustration" />
 
     <!-- Login Form Container -->
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:layout_weight="1"
+        android:contentDescription="Eco illustration"
+        android:scaleType="fitStart"
+        android:src="@drawable/top_illustration" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="-15dp"
         android:layout_weight="1.2"
-        android:orientation="vertical"
         android:background="@color/white"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
-        android:paddingTop="24dp"
-        android:paddingBottom="24dp"
         android:gravity="top"
-        android:layout_marginTop="-16dp">
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingTop="24dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="24dp">
 
         <!-- Title Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:layout_marginBottom="24dp"
             android:gravity="center_vertical"
-            android:layout_marginBottom="24dp">
+            android:orientation="horizontal">
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="38dp"
+                    android:fontFamily="@font/poppins_extrabold"
                     android:text="Welcome to"
-                    android:textSize="24sp"
                     android:textColor="@color/text_primary"
-                    android:textStyle="normal"
-                    android:fontFamily="@font/poppins" />
+                    android:textSize="28sp"
+                    android:textStyle="bold" />
 
-                <TextView
+                <ImageView
+                    android:id="@+id/imageView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="GOSORT"
-                    android:textSize="24sp"
-                    android:textColor="@color/gosort_green"
-                    android:textStyle="bold"
-                    android:fontFamily="@font/poppins" />
+                    app:srcCompat="@drawable/gosorttitle" />
 
             </LinearLayout>
 
             <!-- Logo -->
             <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:orientation="horizontal">
 
                 <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:src="@drawable/logo1"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_width="35dp"
+                    android:layout_height="45dp"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ologo" />
 
                 <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:src="@drawable/logo2" />
+                    android:layout_width="45dp"
+                    android:layout_height="45dp"
+                    android:src="@drawable/pcs" />
 
             </LinearLayout>
 
@@ -89,69 +88,58 @@
             android:id="@+id/emailInput"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:hint="Email"
-            android:textColorHint="@color/text_hint"
-            android:textColor="@color/text_primary"
-            android:textSize="16sp"
+            android:layout_marginBottom="16dp"
             android:background="@drawable/edittext_background"
-            android:inputType="textEmailAddress"
-            android:fontFamily="@font/poppins"
-            android:drawableStart="@drawable/ic_email"
+            android:drawableStart="@drawable/group_8"
             android:drawablePadding="12dp"
-            android:layout_marginBottom="16dp" />
+            android:fontFamily="@font/poppins"
+            android:hint="Email"
+            android:inputType="textEmailAddress"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
+            android:textSize="16sp" />
 
         <!-- Password Input -->
         <EditText
             android:id="@+id/passwordInput"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:hint="Password"
-            android:textColorHint="@color/text_hint"
-            android:textColor="@color/text_primary"
-            android:textSize="16sp"
+            android:layout_marginBottom="8dp"
             android:background="@drawable/edittext_background"
-            android:inputType="textPassword"
-            android:fontFamily="@font/poppins"
-            android:drawableStart="@drawable/c_password"
+            android:drawableStart="@drawable/key"
             android:drawablePadding="12dp"
-            android:layout_marginBottom="8dp" />
+            android:fontFamily="@font/poppins"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
+            android:textSize="16sp" />
 
         <!-- Forgot Password Link -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:text="Forgot Password?"
-            android:textSize="14sp"
-            android:textColor="@color/gosort_green"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="24dp"
-            android:fontFamily="@font/poppins" />
 
         <!-- Progress Bar -->
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone"
+            android:layout_gravity="center"
             android:layout_marginTop="16dp"
-            android:layout_gravity="center" />
+            android:visibility="gone" />
 
         <!-- Sign In Button -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/loginButton"
+            style="@android:style/Widget.Button"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:text="Sign in"
-            android:textSize="16sp"
-            android:textColor="@color/white"
-            android:textStyle="bold"
+            android:layout_marginTop="15dp"
             android:background="@drawable/button_rounded_green"
             android:backgroundTint="@null"
             android:elevation="2dp"
-            android:layout_marginTop="8dp"
-            android:fontFamily="@font/poppins"
-            style="@android:style/Widget.Button" />
+            android:fontFamily="@font/poppin_bold"
+            android:text="Sign in"
+            android:textColor="@color/white"
+            android:textSize="16sp" />
 
     </LinearLayout>
 

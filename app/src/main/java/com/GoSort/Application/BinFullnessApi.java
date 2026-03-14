@@ -10,7 +10,7 @@ import java.net.URL;
 
 public class BinFullnessApi {
     private static final String TAG = "BinFullnessApi";
-    private static final String BASE_URL = "https://gosortweb-production.up.railway.app/api/";
+    private static final String BASE_URL = "https://web-production-15f71.up.railway.app/api/bin_fullness.php";
 
     public interface BinFullnessCallback {
         void onSuccess(JSONArray binData);
@@ -24,20 +24,27 @@ public class BinFullnessApi {
     public void getBinFullness(String deviceIdentity, BinFullnessCallback callback) {
         new Thread(() -> {
             try {
-                String urlStr = BASE_URL + "bin_fullness.php?device_identity=" + deviceIdentity;
+                String urlStr = BASE_URL + "?device_identity=" + deviceIdentity;
                 Log.d(TAG, "Making API request to: " + urlStr);
+
                 URL url = new URL(urlStr);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+
+                int responseCode = conn.getResponseCode();
+                Log.d(TAG, "Response code: " + responseCode);
+
+                BufferedReader br = new BufferedReader(new InputStreamReader(
+                        responseCode == 200
+                                ? conn.getInputStream()
+                                : conn.getErrorStream()));
 
                 StringBuilder response = new StringBuilder();
-                try (BufferedReader br = new BufferedReader(
-                        new InputStreamReader(conn.getInputStream()))) {
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        response.append(line);
-                    }
-                }
+                String line;
+                while ((line = br.readLine()) != null) response.append(line);
+                br.close();
 
                 Log.d(TAG, "Raw API response: " + response.toString());
                 JSONObject jsonResponse = new JSONObject(response.toString());

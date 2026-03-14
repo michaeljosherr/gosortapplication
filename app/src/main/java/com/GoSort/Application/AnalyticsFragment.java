@@ -1,42 +1,55 @@
 package com.GoSort.Application;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import androidx.fragment.app.Fragment;
+import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import android.widget.TextView;
-import android.util.Log;
-import android.widget.Toast;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
-public class AnalyticsFragment extends Fragment {
+public class AnalyticsFragment extends Fragment implements DeviceAdapter.OnDeviceClickListener {
     private static final String TAG = "AnalyticsFragment";
-    private ConcentricDonutView donut;
+    private static final String BASE_URL = "https://web-production-15f71.up.railway.app/api/";
+    private static final String PREF_NAME = "GoSort";
+
     private View root;
-    // Updated to 4 colors to match the four trash categories
+    private ConcentricDonutView donut;
+
+    // Legend % labels
+    private TextView tvBiodeg, tvNonBiodeg, tvMixed, tvHazardous;
+
+    // Today's count cards
+    private TextView tvCountBiodeg, tvCountNonBiodeg, tvCountMixed, tvCountHazardous;
+    private TextView tvTotalCount;
+
+    // Device selector
+    private DeviceAdapter deviceAdapter;
+    private String currentDeviceId = "";
+
     private final int[] cols = new int[]{0xFFF39C12, 0xFF4A90E2, 0xFF27AE60, 0xFFE74C3C};
 
-    // Store TextView references to avoid repeated findViewById calls
-    private TextView tvBiodeg;
-    private TextView tvNonBiodeg;
-    private TextView tvMixed;
-    private TextView tvHazardous;
-
-    // Weekly activity bars and labels
-    private View[] weekBars = new View[7];
-    private TextView[] weekLabels = new TextView[7];
-    private String[] weekBaseLabels = new String[7];
-
     private AnalyticsModel model;
-    private AnalyticsModel.Listener analyticsListener;
-    private AnalyticsModel.ActivityListener activityListener;
+    private AnalyticsModel.DailyListener dailyListener;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                           Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         root = inflater.inflate(R.layout.fragment_analytics, container, false);
         return root;
     }
@@ -44,184 +57,128 @@ public class AnalyticsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        initViews();
+        setupDeviceRecyclerView();
 
-        // Initialize views
-        initializeViews();
+        model = AnalyticsModel.init(requireContext());
 
+        dailyListener = (counts, percentages, total) -> {
+            if (getActivity() == null || root == null) return;
+            getActivity().runOnUiThread(() -> {
+                // Update donut with today's percentages
+                if (donut != null) donut.setData(percentages, cols);
+
+                // Update legend
+                setLegendText(tvBiodeg,    percentages[0]);
+                setLegendText(tvNonBiodeg, percentages[1]);
+                setLegendText(tvMixed,     percentages[2]);
+                setLegendText(tvHazardous, percentages[3]);
+
+                // Update count cards
+                if (tvCountBiodeg    != null) tvCountBiodeg.setText(String.valueOf(counts[0]));
+                if (tvCountNonBiodeg != null) tvCountNonBiodeg.setText(String.valueOf(counts[1]));
+                if (tvCountMixed     != null) tvCountMixed.setText(String.valueOf(counts[2]));
+                if (tvCountHazardous != null) tvCountHazardous.setText(String.valueOf(counts[3]));
+                if (tvTotalCount     != null) tvTotalCount.setText(
+                        String.format(Locale.getDefault(), "%d items sorted today", total));
+            });
+        };
+        model.addDailyListener(dailyListener);
+    }
+
+    private void initViews() {
+        donut            = root.findViewById(R.id.concentricDonut);
+        tvBiodeg         = root.findViewById(R.id.tvBiodeg);
+        tvNonBiodeg      = root.findViewById(R.id.tvNonBiodeg);
+        tvMixed          = root.findViewById(R.id.tvMixed);
+        tvHazardous      = root.findViewById(R.id.tvHazardous);
+        tvCountBiodeg    = root.findViewById(R.id.tvCountBiodeg);
+        tvCountNonBiodeg = root.findViewById(R.id.tvCountNonBiodeg);
+        tvCountMixed     = root.findViewById(R.id.tvCountMixed);
+        tvCountHazardous = root.findViewById(R.id.tvCountHazardous);
+        tvTotalCount     = root.findViewById(R.id.tvTotalCount);
+    }
+
+    private void setLegendText(TextView tv, int pct) {
+        if (tv == null) return;
+        tv.setText(String.format(Locale.getDefault(), "%d%%", pct));
+        tv.setTextColor(0xFF333333);
+    }
+
+    private void setupDeviceRecyclerView() {
+        RecyclerView recycler = root.findViewById(R.id.recyclerDevicesAnalytics);
+        if (recycler == null) { Log.e(TAG, "recyclerDevicesAnalytics not found"); return; }
+        deviceAdapter = new DeviceAdapter(this);
+        recycler.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        recycler.setAdapter(deviceAdapter);
+        fetchAssignedDevices();
+    }
+
+    private void fetchAssignedDevices() {
+        android.content.SharedPreferences prefs =
+                requireActivity().getSharedPreferences(PREF_NAME, android.content.Context.MODE_PRIVATE);
+        String username = prefs.getString("username", "");
+        if (username.isEmpty()) return;
+
+        new Thread(() -> {
+            try {
+                URL url = new URL(BASE_URL + "user_details_api.php?username=" + username);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+
+                BufferedReader br = new BufferedReader(new InputStreamReader(
+                        conn.getResponseCode() == 200 ? conn.getInputStream() : conn.getErrorStream()));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) sb.append(line);
+                br.close();
+
+                JSONObject json = new JSONObject(sb.toString());
+                if (!json.optBoolean("success", false)) return;
+
+                JSONArray sorters = json.getJSONObject("data").getJSONArray("assigned_sorters");
+                List<JSONObject> deviceList = new ArrayList<>();
+                for (int i = 0; i < sorters.length(); i++) deviceList.add(sorters.getJSONObject(i));
+
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> {
+                    deviceAdapter.setDevices(deviceList);
+                    if (!deviceList.isEmpty()) onDeviceClick(deviceList.get(0));
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "fetchAssignedDevices error: " + e.getMessage());
+            }
+        }).start();
+
+    }
+
+    @Override
+    public void onDeviceClick(JSONObject device) {
         try {
-            // Initialize analytics model with context
-            model = AnalyticsModel.init(requireContext());
-
-            if (model == null) {
-                handleError(getString(R.string.analytics_init_failed));
-                return;
+            currentDeviceId = device.optString("device_identity", "");
+            for (int i = 0; i < deviceAdapter.getItemCount(); i++) {
+                if (deviceAdapter.getDevices().get(i)
+                        .optString("device_identity", "").equals(currentDeviceId)) {
+                    deviceAdapter.setSelectedPosition(i);
+                    break;
+                }
             }
-
-            // Apply initial values and log them
-            int[] initialValues = model.getValues();
-            logValues("Initial values", initialValues);
-            updateUI(initialValues);
-
-            // Listen for model changes
-            analyticsListener = values -> {
-                logValues("Received updated values", values);
-                updateUI(values);
-            };
-            model.addListener(analyticsListener);
-
-            // Listen for weekly activity changes
-            activityListener = counts -> {
-                Log.d(TAG, "Received weekly activity: " + java.util.Arrays.toString(counts));
-                updateWeeklyUI(counts);
-            };
-            model.addActivityListener(activityListener);
-
+            model.fetch(currentDeviceId);
         } catch (Exception e) {
-            Log.e(TAG, "Error initializing analytics: " + e.getMessage());
-            handleError(getString(R.string.analytics_load_failed));
+            Log.e(TAG, "onDeviceClick error: " + e.getMessage());
         }
-    }
-
-    private void initializeViews() {
-        donut = root.findViewById(R.id.concentricDonut);
-        tvBiodeg = root.findViewById(R.id.tvBiodeg);
-        tvNonBiodeg = root.findViewById(R.id.tvNonBiodeg);
-        tvMixed = root.findViewById(R.id.tvMixed);
-        tvHazardous = root.findViewById(R.id.tvHazardous);
-
-        // Weekly bars
-        weekBars[0] = root.findViewById(R.id.bar_day0);
-        weekBars[1] = root.findViewById(R.id.bar_day1);
-        weekBars[2] = root.findViewById(R.id.bar_day2);
-        weekBars[3] = root.findViewById(R.id.bar_day3);
-        weekBars[4] = root.findViewById(R.id.bar_day4);
-        weekBars[5] = root.findViewById(R.id.bar_day5);
-        weekBars[6] = root.findViewById(R.id.bar_day6);
-
-        weekLabels[0] = root.findViewById(R.id.label_day0);
-        weekLabels[1] = root.findViewById(R.id.label_day1);
-        weekLabels[2] = root.findViewById(R.id.label_day2);
-        weekLabels[3] = root.findViewById(R.id.label_day3);
-        weekLabels[4] = root.findViewById(R.id.label_day4);
-        weekLabels[5] = root.findViewById(R.id.label_day5);
-        weekLabels[6] = root.findViewById(R.id.label_day6);
-
-        // capture base labels so we don't keep appending counts repeatedly
-        for (int i = 0; i < 7; i++) {
-            TextView lbl = weekLabels[i];
-            weekBaseLabels[i] = (lbl != null) ? lbl.getText().toString() : "";
-        }
-    }
-
-    private void logValues(String prefix, int[] values) {
-        if (values == null || values.length != 4) {
-            Log.e(TAG, prefix + ": Invalid values array (expected 4)");
-            return;
-        }
-
-        Log.d(TAG, prefix + ": " +
-              "Bio=" + values[0] + "%, " +
-              "NonBio=" + values[1] + "%, " +
-              "Mixed=" + values[2] + "%, " +
-              "Hazardous=" + values[3] + "%");
-    }
-
-    private void handleError(String message) {
-        if (getContext() != null) {
-            Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
-        }
-        Log.e(TAG, message);
-    }
-
-    private void updateUI(int[] values) {
-        if (getActivity() == null || root == null || values == null || values.length != 4) {
-            Log.e(TAG, "Invalid state in updateUI");
-            return;
-        }
-
-        getActivity().runOnUiThread(() -> {
-            try {
-                if (donut != null) {
-                    donut.setData(values, cols);
-                    Log.d(TAG, "Updated donut chart with values");
-                }
-
-                if (tvBiodeg != null) tvBiodeg.setText(getString(R.string.percentage_format, values[0]));
-                if (tvNonBiodeg != null) tvNonBiodeg.setText(getString(R.string.percentage_format, values[1]));
-                if (tvMixed != null) tvMixed.setText(getString(R.string.percentage_format, values[2]));
-                if (tvHazardous != null) tvHazardous.setText(getString(R.string.percentage_format, values[3]));
-
-                Log.d(TAG, "Updated percentage labels");
-            } catch (Exception e) {
-                Log.e(TAG, "Error updating UI: " + e.getMessage());
-            }
-        });
-    }
-
-    // Update weekly activity UI - counts length expected to be 7 (day0 = 6 days ago .. day6 = today)
-    private void updateWeeklyUI(int[] counts) {
-        if (getActivity() == null || root == null || counts == null || counts.length != 7) {
-            Log.e(TAG, "Invalid state in updateWeeklyUI");
-            return;
-        }
-
-        getActivity().runOnUiThread(() -> {
-            try {
-                int max = 0;
-                for (int c : counts) if (c > max) max = c;
-
-                // Convert dp to px
-                float density = getResources().getDisplayMetrics().density;
-                int maxPx = (int) (120 * density); // max bar height
-                int minPx = (int) (8 * density);   // min bar height so it's always visible
-
-                for (int i = 0; i < 7; i++) {
-                    View bar = weekBars[i];
-                    if (bar == null) continue;
-                    int height = minPx;
-                    if (max > 0) {
-                        height = minPx + Math.round(((float) counts[i] / (float) max) * (maxPx - minPx));
-                    } else {
-                        // all counts are zero - keep minimal height
-                        height = minPx;
-                    }
-                    android.view.ViewGroup.LayoutParams lp = bar.getLayoutParams();
-                    lp.height = Math.max(1, height);
-                    bar.setLayoutParams(lp);
-
-                    // Update the label to show base label + count (e.g., Mon\n3)
-                    TextView lbl = weekLabels[i];
-                    if (lbl != null) {
-                        String base = weekBaseLabels[i] != null ? weekBaseLabels[i] : "";
-                        lbl.setText(String.format(Locale.getDefault(), "%s\n%d", base, counts[i]));
-                    }
-                }
-
-                Log.d(TAG, "Weekly UI updated");
-            } catch (Exception e) {
-                Log.e(TAG, "Error updating weekly UI: " + e.getMessage());
-            }
-        });
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (model != null && analyticsListener != null) {
-            model.removeListener(analyticsListener);
-        }
-        if (model != null && activityListener != null) {
-            model.removeActivityListener(activityListener);
-        }
-        // Clear view references
-        donut = null;
-        tvBiodeg = null;
-        tvNonBiodeg = null;
-        tvMixed = null;
-        tvHazardous = null;
-        weekBars = null;
-        weekLabels = null;
-        weekBaseLabels = null;
-        root = null;
+        if (model != null && dailyListener != null) model.removeDailyListener(dailyListener);
+        donut = null; tvBiodeg = null; tvNonBiodeg = null;
+        tvMixed = null; tvHazardous = null;
+        tvCountBiodeg = null; tvCountNonBiodeg = null;
+        tvCountMixed = null; tvCountHazardous = null;
+        tvTotalCount = null; root = null;
     }
 }

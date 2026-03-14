@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/dialog_rounded_bg">
+
+    <!-- Icon -->
+    <ImageView
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/chip_unselected_bg"
+        android:padding="12dp"
+        android:src="@drawable/ic_edit"
+        android:scaleType="centerInside"
+        android:contentDescription="Change Password" />
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="@font/poppin_semibold"
+        android:gravity="center"
+        android:text="Change Password"
+        android:textColor="#1A1A1A"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <!-- Message -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:fontFamily="@font/poppin"
+        android:gravity="center"
+        android:lineSpacingMultiplier="1.4"
+        android:text="To change your password, please contact your administrator."
+        android:textColor="#757575"
+        android:textSize="14sp" />
+
+    <!-- OK Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnDialogOk"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:fontFamily="@font/poppin_semibold"
+        android:text="Got it"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        app:backgroundTint="#14AE31"
+        app:cornerRadius="12dp" />
+
+</LinearLayout>
