@@ -115,7 +115,7 @@
                         android:textSize="12sp" />
 
                     <!-- Donut -->
-                    <com.example.gosortapplication.ConcentricDonutView
+                    <com.GoSort.Application.ConcentricDonutView
                         android:id="@+id/concentricDonut"
                         android:layout_width="180dp"
                         android:layout_height="180dp"
