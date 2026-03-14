@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.gosortapplication"
+    namespace = "com.GoSort.Application"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.gosortapplication"
+        applicationId = "com.GoSort.Application"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
