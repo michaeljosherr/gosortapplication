@@ -48,7 +48,7 @@ public class ProfileFragment extends Fragment {
     private static final String TAG = "ProfileFragment";
     private static final String PREF_NAME = "GoSort";
     private static final String KEY_DEVICE_IP = "device_ip";
-    private static final String BASE_URL = "https://web-production-15f71.up.railway.app/api/";
+    private static final String BASE_URL = "https://gosort.up.railway.app/api/";
     private static final long ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
 
     private ImageView imgAvatar;

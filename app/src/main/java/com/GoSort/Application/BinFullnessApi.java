@@ -10,7 +10,7 @@ import java.net.URL;
 
 public class BinFullnessApi {
     private static final String TAG = "BinFullnessApi";
-    private static final String BASE_URL = "https://web-production-15f71.up.railway.app/api/bin_fullness.php";
+    private static final String BASE_URL = "https://gosort.up.railway.app/api/bin_fullness.php";
 
     public interface BinFullnessCallback {
         void onSuccess(JSONArray binData);

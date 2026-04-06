@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class HomeFragment extends Fragment implements DeviceAdapter.OnDeviceClickListener {
     private static final String TAG = "HomeFragment";
     private static final String PREF_NAME = "GoSort";
-    private static final String BASE_URL = "https://web-production-15f71.up.railway.app/api/";
+    private static final String BASE_URL = "https://gosort.up.railway.app/api/";
 
     // Every time the user picks a different device this counter increments.
     // Each fetch captures the current version; if it doesn't match when the

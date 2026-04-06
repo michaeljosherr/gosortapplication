@@ -9,7 +9,7 @@ import java.net.URL;
 
 public class UserDetailsApi {
     private static final String TAG = "UserDetailsApi";
-    private static final String BASE_URL = "https://web-production-15f71.up.railway.app/api/";
+    private static final String BASE_URL = "https://gosort.up.railway.app/api/";
 
     public interface UserDetailsCallback {
         void onSuccess(JSONObject userDetails);

@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG                      = "MainActivity";
     private static final int    NOTIFICATION_PERMISSION_CODE = 123;
-    private static final String BASE_URL                 = "https://web-production-15f71.up.railway.app/api/";
+    private static final String BASE_URL                 = "https://gosort.up.railway.app/api/";
     private static final int    UPDATE_INTERVAL          = 5000;
 
     // All assigned device IDs for this user — populated on start

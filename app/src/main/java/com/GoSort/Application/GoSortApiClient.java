@@ -20,7 +20,7 @@ import android.util.Log;
 
 public class GoSortApiClient {
     private static final String TAG = "GoSortApiClient";
-    private static final String BASE_URL = "https://web-production-15f71.up.railway.app/api/";
+    private static final String BASE_URL = "https://gosort.up.railway.app/api/";
     private final OkHttpClient client;
 
     public interface ApiCallback {

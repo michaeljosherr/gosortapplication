@@ -24,7 +24,7 @@ import okhttp3.ResponseBody;
 
 public class AnalyticsModel {
     private static final String TAG = "AnalyticsModel";
-    private static final String BASE_URL = "https://web-production-15f71.up.railway.app/api/";
+    private static final String BASE_URL = "https://gosort.up.railway.app/api/";
 
     private static AnalyticsModel instance;
 

@@ -26,7 +26,7 @@ import java.util.Locale;
 
 public class AnalyticsFragment extends Fragment implements DeviceAdapter.OnDeviceClickListener {
     private static final String TAG = "AnalyticsFragment";
-    private static final String BASE_URL = "https://web-production-15f71.up.railway.app/api/";
+    private static final String BASE_URL = "https://gosort.up.railway.app/api/";
     private static final String PREF_NAME = "GoSort";
 
     private View root;
